@@ -285,6 +285,7 @@ const login = async () => {
             Cookies.set('hciID', response.data.user.hciID);
             Cookies.set('uname', response.data.user.username);
             Cookies.set('pID', response.data.user.personID);
+            Cookies.set('uID', response.data.user.id);
             Cookies.set('tempPass', response.data.user.tempPassChanged);
             localStorage.setItem('sessionID', response.data.token);
             router.push('/ours/dashboard');

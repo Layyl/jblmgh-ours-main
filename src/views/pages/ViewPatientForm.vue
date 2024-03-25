@@ -10,7 +10,6 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Swal from 'sweetalert2';
 import api from '../../api';
-import api2 from '../../api2';
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
@@ -47,6 +46,7 @@ const refer = ref(false);
 const referOPCEN = ref(false);
 const chatBox = ref(false);
 const editVitals = ref(false);
+const refHisID = ref('');
 const userId = ref('');
 const messages = ref([]);
 const newMessage = ref('');
@@ -245,6 +245,10 @@ const fetchReferralData = async () => {
         patientFiles.value = patientFilesArray;
     }
     convertCmToFeetAndInches(referral.height);
+};
+const fetchMessages = async () => {
+    const response = await api.get(`/fetchReferralMessages?referralHistoryID=${referralHistoryID.value}`, { headers: header });
+    messages.value = response.data;
 };
 const fetchCivilStatus = async () => {
     const response = await api.get(`/fetchCivilStatus`, { headers: header });
@@ -480,6 +484,12 @@ const handleTransferClick = async () => {
     await transferReferral();
     hideLoadingModal('Successfully Referred!🎉', 'Referral to other HCI successfully created.');
 };
+const handleChatboxClick = async () => {
+    chatBox.value = true;
+    setTimeout(() => {
+        scrollToBottom();
+    }, 100);
+};
 const printReferralForm = async () => {
     window.open(`http://192.163.8.195:90/api/getReferralForm?referralID=${referralHistoryID.value}`);
 };
@@ -555,20 +565,37 @@ const getStatus = (referralStatus) => {
             return 'Unknown';
     }
 };
+
 const handleNewChatMessage = (e) => {
-    if (e.user !== userId.value) {
+    if (e.referralHistoryID === refHisID.value) {
+        console.log('message');
         messages.value.push({
-            text: e.message,
-            user: e.user
+            message: e.message,
+            user_id: e.user_id,
+            username: e.username,
+            sent_date: e.sent_date,
+            sent_time: e.sent_time
         });
+        console.log(messages.value);
+        setTimeout(() => {
+            scrollToBottom();
+        }, 50);
     }
 };
+
+const scrollToBottom = () => {
+    const div = document.getElementById('messages-container');
+    div.scrollTo({
+        top: div.scrollHeight,
+        behavior: 'smooth'
+    });
+};
+
 const sendMessage = async () => {
     const response = await api
         .post(
             '/broadcast',
             {
-                user: userId.value,
                 message: newMessage.value,
                 referralHistoryID: referralData.value.referralHistoryID
             },
@@ -580,11 +607,6 @@ const sendMessage = async () => {
             }
         )
         .then((response) => {
-            messages.value.push({
-                text: newMessage.value,
-                user: userId.value
-            });
-
             newMessage.value = '';
         })
         .catch((error) => {
@@ -600,14 +622,16 @@ window.Echo = new Echo({
     wsPort: 6001,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false,
-    enabledTransports: ['ws']
+    forceTLS: false
 });
 
 onMounted(async () => {
-    userId.value = Cookies.get('hciID');
-
     window.Echo.channel('chat').listen('NewChatMessage', handleNewChatMessage);
+
+    window.Echo.connector.pusher.connection.bind('connected', function () {
+        console.log('Pusher Connected');
+    });
+
     fetching.value = true;
     referralHistoryID.value = route.query.rhid;
     hciID.value = Cookies.get('hciID');
@@ -622,12 +646,17 @@ onMounted(async () => {
     await fetchProvince();
     await fetchMunicipality();
     await fetchBarangay();
+    await fetchMessages();
+
+    userId.value = Cookies.get('uID');
+    refHisID.value = referralData.value.referralHistoryID;
+
     fetching.value = false;
 });
 </script>
 
 <template>
-    <Button icon="pi pi-send" class="p-button-rounded p-button-info fixed z-1 bottom-0 right-0 m-4" @click="chatBox = true" />
+    <Button icon="pi pi-send" class="p-button-rounded p-button-primary fixed z-1 bottom-0 right-0 m-4" @click="handleChatboxClick" />
     <div class="mb-5" v-if="hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus == 1">
         <Menubar :model="jbl" />
     </div>
@@ -644,34 +673,24 @@ onMounted(async () => {
         <Menubar :model="reopen" />
     </div>
 
-    <Sidebar v-model:visible="chatBox" position="right" :blockScroll="true" style="height: 100%" class="w-full md:w-25rem lg:w-25rem">
-        <div class="flex flex-column e h-full">
-            <div class="flex-grow overflow-auto h-full">
-                <div class="mb-4">
-                    <div class="flex">
-                        <h6>JBLMGH</h6>
-                        <span class="mx-1 text-400 text-xs">11:10AM</span>
+    <Sidebar header="Chats" v-model:visible="chatBox" position="right" :blockScroll="true" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
+        <div class="chat-container">
+            <div class="messages-container" id="messages-container">
+                <div :class="{ message: true, sent: m.user_id == userId, received: m.user_id != userId }" v-for="m of messages">
+                    <div class="message-header">
+                        <span
+                            ><b>{{ m.user_id == userId ? 'You' : m.username }}</b></span
+                        >
+                        <span class="message-timestamp">{{ m.sent_date }} {{ m.sent_time }}</span>
                     </div>
-                    <p>Hello po kamusta po ang pasyente nyo uwu</p>
-                </div>
-                <div class="mb-4">
-                    <div class="flex">
-                        <h6>MSHC</h6>
-                        <span class="mx-1 text-400 text-xs">11:11AM</span>
+                    <div class="message-content">
+                        <p>{{ m.message }}</p>
                     </div>
-                    <p>Secret po tagal mo po kasi magchat huhu</p>
-                </div>
-                <div class="mb-4">
-                    <div class="flex">
-                        <h6>JBLMGH</h6>
-                        <span class="mx-1 text-400 text-xs">11:12AM</span>
-                    </div>
-                    <p>edi dont.</p>
                 </div>
             </div>
-            <div class="flex">
-                <InputText v-model="newMessage" placeholder="Type your message..." class="flex-grow w-full" />
-                <Button @click="sendMessage" icon="pi pi-send" severity="info" class="mx-2 w-2" />
+            <div class="input-container">
+                <InputText v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." class="message-input" />
+                <Button :disabled="newMessage == ''" @click="sendMessage" icon="pi pi-send" class="send-button" />
             </div>
         </div>
     </Sidebar>
@@ -1178,3 +1197,58 @@ onMounted(async () => {
         </Dialog>
     </div>
 </template>
+<style scoped>
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.message {
+    width: 18rem;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.sent {
+    background-color: #059669;
+    color: #ffffff;
+    align-self: flex-end;
+}
+
+.received {
+    background-color: #f0f0f0;
+    color: #000000;
+    align-self: flex-start;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.message-timestamp {
+    font-size: 0.7em;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.message-input {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+</style>
