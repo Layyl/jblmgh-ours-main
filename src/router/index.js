@@ -43,7 +43,14 @@ const router = createRouter({
         {
             path: '/forgot-password',
             name: 'ForgotPassword',
-            component: () => import('@/views/pages/ForgotPasswordSet.vue')
+            component: () => import('@/views/pages/ForgotPasswordSet.vue'),
+            beforeEnter: (to, from, next) => {
+                if (Object.keys(to.query).length > 0) {
+                    next();
+                } else {
+                    next('/');
+                }
+            }
         },
         {
             path: '/success',

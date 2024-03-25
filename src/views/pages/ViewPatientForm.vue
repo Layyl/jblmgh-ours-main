@@ -1,5 +1,8 @@
 <script setup>
 import { onMounted, ref } from 'vue';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRoute } from 'vue-router';
@@ -7,6 +10,7 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Swal from 'sweetalert2';
 import api from '../../api';
+import api2 from '../../api2';
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
@@ -41,7 +45,11 @@ const opcen = ref(false);
 const reopenModal = ref(false);
 const refer = ref(false);
 const referOPCEN = ref(false);
+const chatBox = ref(false);
 const editVitals = ref(false);
+const userId = ref('');
+const messages = ref([]);
+const newMessage = ref('');
 const genderList = ref([
     { gender: 'Male', value: 1 },
     { gender: 'Female', value: 2 }
@@ -547,7 +555,59 @@ const getStatus = (referralStatus) => {
             return 'Unknown';
     }
 };
+const handleNewChatMessage = (e) => {
+    if (e.user !== userId.value) {
+        messages.value.push({
+            text: e.message,
+            user: e.user
+        });
+    }
+};
+const sendMessage = async () => {
+    const response = await api
+        .post(
+            '/broadcast',
+            {
+                user: userId.value,
+                message: newMessage.value,
+                referralHistoryID: referralData.value.referralHistoryID
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${Cookies.get('token')}`
+                }
+            }
+        )
+        .then((response) => {
+            messages.value.push({
+                text: newMessage.value,
+                user: userId.value
+            });
+
+            newMessage.value = '';
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+};
+
+window.Pusher = Pusher;
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    wsHost: window.location.hostname,
+    wsPort: 6001,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    disableStats: true,
+    forceTLS: false,
+    enabledTransports: ['ws']
+});
+
 onMounted(async () => {
+    userId.value = Cookies.get('hciID');
+
+    window.Echo.channel('chat').listen('NewChatMessage', handleNewChatMessage);
     fetching.value = true;
     referralHistoryID.value = route.query.rhid;
     hciID.value = Cookies.get('hciID');
@@ -567,6 +627,7 @@ onMounted(async () => {
 </script>
 
 <template>
+    <Button icon="pi pi-send" class="p-button-rounded p-button-info fixed z-1 bottom-0 right-0 m-4" @click="chatBox = true" />
     <div class="mb-5" v-if="hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus == 1">
         <Menubar :model="jbl" />
     </div>
@@ -582,6 +643,38 @@ onMounted(async () => {
     <div class="mb-5" v-if="hciID == referralData.receivingHospital && referralData.referralStatus > 3">
         <Menubar :model="reopen" />
     </div>
+
+    <Sidebar v-model:visible="chatBox" position="right" :blockScroll="true" style="height: 100%" class="w-full md:w-25rem lg:w-25rem">
+        <div class="flex flex-column e h-full">
+            <div class="flex-grow overflow-auto h-full">
+                <div class="mb-4">
+                    <div class="flex">
+                        <h6>JBLMGH</h6>
+                        <span class="mx-1 text-400 text-xs">11:10AM</span>
+                    </div>
+                    <p>Hello po kamusta po ang pasyente nyo uwu</p>
+                </div>
+                <div class="mb-4">
+                    <div class="flex">
+                        <h6>MSHC</h6>
+                        <span class="mx-1 text-400 text-xs">11:11AM</span>
+                    </div>
+                    <p>Secret po tagal mo po kasi magchat huhu</p>
+                </div>
+                <div class="mb-4">
+                    <div class="flex">
+                        <h6>JBLMGH</h6>
+                        <span class="mx-1 text-400 text-xs">11:12AM</span>
+                    </div>
+                    <p>edi dont.</p>
+                </div>
+            </div>
+            <div class="flex">
+                <InputText v-model="newMessage" placeholder="Type your message..." class="flex-grow w-full" />
+                <Button @click="sendMessage" icon="pi pi-send" severity="info" class="mx-2 w-2" />
+            </div>
+        </div>
+    </Sidebar>
 
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
@@ -1084,5 +1177,4 @@ onMounted(async () => {
             </div>
         </Dialog>
     </div>
-    <ScrollTop />
 </template>
