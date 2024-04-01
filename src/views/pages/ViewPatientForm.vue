@@ -491,7 +491,7 @@ const handleChatboxClick = async () => {
     }, 100);
 };
 const printReferralForm = async () => {
-    window.open(`http://192.163.8.195:90/api/getReferralForm?referralID=${referralHistoryID.value}`);
+    window.open(`http://192.163.8.195:90/api/getReferralForm?referralHistoryID=${referralHistoryID.value}`);
 };
 const getStatusClassTL = (referralStatus) => {
     switch (referralStatus) {
@@ -673,9 +673,9 @@ onMounted(async () => {
         <Menubar :model="reopen" />
     </div>
 
-    <Sidebar header="Chats" v-model:visible="chatBox" position="right" :blockScroll="true" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
+    <Sidebar v-model:visible="chatBox" position="right" :blockScroll="false" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
         <div class="chat-container">
-            <div class="messages-container" id="messages-container">
+            <div class="messages-container mostly-customized-scrollbar" id="messages-container">
                 <div :class="{ message: true, sent: m.user_id == userId, received: m.user_id != userId }" v-for="m of messages">
                     <div class="message-header">
                         <span
@@ -1250,5 +1250,15 @@ onMounted(async () => {
 .message-input {
     flex-grow: 1;
     margin-right: 10px;
+}
+.mostly-customized-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 8px;
+    background-color: #c7c6c6; /* or add it to the track */
+}
+
+/* Add a thumb */
+.mostly-customized-scrollbar::-webkit-scrollbar-thumb {
+    background: #9d9c9c;
 }
 </style>

@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted, reactive, ref, watch } from 'vue';
-import ProductService from '@/service/ProductService';
 import Cookies from 'js-cookie';
 import { useLayout } from '@/layout/composables/layout';
 import api from '../api';
@@ -15,6 +14,8 @@ const inboundFirstName = ref('');
 const inboundMiddleName = ref('');
 const hciID = ref('');
 const inboundPatients = ref([]);
+const erCensusPie = ref([]);
+const erCensus = ref([]);
 const dashboardCensus = ref('');
 const tempPasswordChanged = ref('');
 const userID = ref('');
@@ -88,6 +89,10 @@ const fetchDashboardCensus = async () => {
     const response = await api.get(`/fetchDashboardCensus?hciID=${hciID.value}`, { headers: header });
     dashboardCensus.value = response.data;
 };
+const fetchERCensus = async () => {
+    const response = await api.get(`/fetchERCount`, { headers: header });
+    erCensus.value = response.data[0];
+};
 const checkPasswordRequirements = (password) => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
     return passwordRegex.test(password);
@@ -116,6 +121,7 @@ onMounted(async () => {
     userID.value = Cookies.get('pID');
     await fetchDashboardCensus();
     await getRecentInbound();
+    await fetchERCensus();
     fetching.value = false;
 });
 </script>
@@ -186,8 +192,45 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
+        <div class="col-12 xl:col-4">
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <h5>JBLMGH ER Census</h5>
+                </div>
+                <ul class="list-none p-0 m-0">
+                    <Skeleton v-if="fetching" class="mb-3" width="auto" height="1rem"></Skeleton>
+                    <li v-else class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">On Going Consultations</span>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <span class="text-green-400 ml-3 font-medium">{{ erCensus.ongoing_ED_consultation_total }} Patients</span>
+                        </div>
+                    </li>
+                    <Skeleton v-if="fetching" class="mb-3" width="auto" height="1rem"></Skeleton>
+                    <li v-else class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Admitted Patients</span>
+                            <div class="mt-1 text-600">Staying in the ER</div>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <span class="text-green-500 ml-3 font-medium">{{ erCensus.admitted_still_at_ED_total }} Patients</span>
+                        </div>
+                    </li>
+                    <Skeleton v-if="fetching" class="mb-3" width="auto" height="1rem"></Skeleton>
+                    <li v-else class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
+                        <div>
+                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Total Number of Patients in the ER</span>
+                        </div>
+                        <div class="mt-2 md:mt-0 flex align-items-center">
+                            <span class="text-green-600 ml-3 font-bold">{{ erCensus.total_patients_total }} Patients</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
 
-        <div class="col-12 xl:col-12">
+        <div class="col-12 xl:col-8">
             <div class="card">
                 <h5>Recent Referrals</h5>
                 <DataTable v-if="fetching" :value="tableSkeleton">
