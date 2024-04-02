@@ -594,7 +594,7 @@ const scrollToBottom = () => {
 const sendMessage = async () => {
     const response = await api
         .post(
-            '/broadcast',
+            '/sendChat',
             {
                 message: newMessage.value,
                 referralHistoryID: referralData.value.referralHistoryID
@@ -675,7 +675,7 @@ onMounted(async () => {
 
     <Sidebar v-model:visible="chatBox" position="right" :blockScroll="false" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
         <div class="chat-container">
-            <div class="messages-container mostly-customized-scrollbar" id="messages-container">
+            <div class="messages-container custom-scrollbar" id="messages-container">
                 <div :class="{ message: true, sent: m.user_id == userId, received: m.user_id != userId }" v-for="m of messages">
                     <div class="message-header">
                         <span
@@ -1103,7 +1103,7 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-6rem">Department</label>
-                <Dropdown required editable v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="serviceType" optionValue="serviceTypeID" placeholder="Select Department" />
+                <Dropdown required editable v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" />
             </div>
             <div class="flex align-items-center gap-3 mb-2">
                 <label for="email" class="font-semibold w-6rem">Physician</label>
@@ -1244,21 +1244,20 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     padding: 10px;
-    background-color: #f9f9f9;
 }
 
 .message-input {
     flex-grow: 1;
     margin-right: 10px;
 }
-.mostly-customized-scrollbar::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
     width: 5px;
     height: 8px;
     background-color: #c7c6c6; /* or add it to the track */
 }
 
 /* Add a thumb */
-.mostly-customized-scrollbar::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
     background: #9d9c9c;
 }
 </style>

@@ -115,8 +115,8 @@ const isOutsideClicked = (event) => {
                 <span>Change Theme</span>
             </button>
             <button @click="" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
-                <i class="pi pi-user"></i>
-                <span>Profile Settings</span>
+                <i class="pi pi-bell"></i>
+                <span>Notifications</span>
             </button>
         </div>
     </div>
