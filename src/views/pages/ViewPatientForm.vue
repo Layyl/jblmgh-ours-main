@@ -879,7 +879,7 @@ onMounted(async () => {
                         <label v-else for="province">Province <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <Dropdown v-else required disabled v-model="referralData.provinceID" :options="provinceList" optionLabel="description" optionValue="provinceID" @change="fetchMunicipality()" placeholder="Select Province" />
-                    </div>
+                    </div> 
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infName">City/Municipality <span class="text-red-600">*</span></label>

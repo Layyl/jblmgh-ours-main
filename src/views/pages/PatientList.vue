@@ -318,7 +318,6 @@ onMounted(async () => {
                                             </Card>
                                         </template>
                                     </Timeline>
-
                                     <!-- <DataTable :value="slotProps.data.referralHistory">
                                         <Column field="receivingHospitalDescription" header="Receiving Hospital"></Column>
                                         <Column field="formatted_created_at" header="Date of Referral Transfer"></Column>

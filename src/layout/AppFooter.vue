@@ -10,6 +10,6 @@ const logoUrl = computed(() => {
 </script>
 
 <template>
-    <div class="layout-footer">by <span class="font-medium ml-2">JBLMGH - IHOMS UNIT</span></div>
+    <div class="layout-footer">by <span class="font-medium ml-2">JBLMGH - IHOMS</span></div>
 </template>
 <style lang="scss" scoped></style>
