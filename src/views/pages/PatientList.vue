@@ -313,7 +313,7 @@ onMounted(async () => {
                                                     <p>
                                                         Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
                                                     </p>
-                                                    <Button @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus == 1" label="View Referral"></Button>
+                                                    <Button @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
                                                 </template>
                                             </Card>
                                         </template>

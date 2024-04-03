@@ -1256,7 +1256,6 @@ onMounted(async () => {
     background-color: #c7c6c6; /* or add it to the track */
 }
 
-/* Add a thumb */
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #9d9c9c;
 }
