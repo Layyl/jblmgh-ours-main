@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '@/layout/AppLayout.vue';
 import NotFound from '@/views/pages/NotFound.vue';
 import useAuth from '@/service/useAuth';
+import Cookies from 'js-cookie';
 const isAuthenticated = () => {
     return localStorage.getItem('sessionID') !== null;
 };
@@ -110,6 +111,8 @@ const router = createRouter({
 const { checkTokenAndClearSession } = useAuth();
 router.beforeEach((to, from, next) => {
     checkTokenAndClearSession();
+    Cookies.remove('referralID');
+
     if (to.meta.requiresAuth && !isAuthenticated()) {
         next('/');
     } else {

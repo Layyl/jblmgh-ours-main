@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import useAuth from '../service/useAuth';
 import { useLayout } from '@/layout/composables/layout';
 import Cookies from 'js-cookie';
@@ -24,9 +24,11 @@ const hospID = ref('');
 hospID.value = Cookies.get('hciID');
 const notificationsList = ref([]);
 const menu = ref();
-
+const newNotif = ref(false);
+const refID = ref('');
 const showNotifs = (event) => {
     notifs.value.toggle(event);
+    newNotif.value = false;
 };
 
 const onChangeTheme = (theme, mode) => {
@@ -50,15 +52,24 @@ const showNotification = (e) => {
     console.log(e);
     if (e.sent_to == hospID.value) {
         if (e.notificationType == '1') {
-            toast.add({ severity: 'success', summary: 'Accepted', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'success', summary: 'Accepted', detail: `${e.notification}`, life: 300000 });
         } else if (e.notificationType == '2') {
-            toast.add({ severity: 'info', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'warn', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 300000 });
         } else if (e.notificationType == '3') {
-            toast.add({ severity: 'info', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'warn', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 300000 });
         } else if (e.notificationType == '4') {
-            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 300000 });
+        } else if (e.notificationType == '5') {
+            toast.add({ severity: 'error', summary: 'Referral Deferred', detail: `${e.notification}`, life: 300000 });
+        } else if (e.notificationType == '6') {
+            toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 300000 });
+        } else if (e.notificationType == '7') {
+            if (e.referralHistoryID != refID.value) {
+                toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 300000 });
+            }
         }
         fetchNotifications();
+        newNotif.value = true;
     }
 };
 window.Pusher = Pusher;
@@ -84,6 +95,13 @@ const fetchNotifications = async () => {
 };
 
 onMounted(() => {
+    setInterval(() => {
+        const currentReferralID = Cookies.get('referralID');
+        if (currentReferralID != refID.value) {
+            refID.value = currentReferralID;
+        }
+    }, 1000);
+
     fetchNotifications();
     bindOutsideClickListener();
     checkTokenAndClearSession();
@@ -148,12 +166,9 @@ const isOutsideClicked = (event) => {
             <i class="pi pi-bars"></i>
         </button>
 
-        <button class="p-link layout-topbar-menu-button layout-topbar-button" @click="onTopBarMenuButton()">
+        <button class="p-link layout-topbar-menu-button" @click="onTopBarMenuButton()">
             <div>
-                <button @click="showNotifs" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
-                    <i class="pi pi-bell"></i>
-                    <span>Notifications</span>
-                </button>
+                <i @click="showNotifs" class="pi pi-bell cursor-pointer text-2xl pl-3"> <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newNotif" :value="notificationCount" severity="danger" /> </i>
             </div>
         </button>
 
@@ -166,11 +181,12 @@ const isOutsideClicked = (event) => {
                 <i class="pi pi-moon"></i>
                 <span>Change Theme</span>
             </button> -->
+
+            <i @click="showNotifs" class="pi pi-bell cursor-pointer text-2xl pl-3">
+                <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newNotif" :value="notificationCount" severity="danger" />
+            </i>
+
             <div>
-                <button @click="showNotifs" aria-haspopup="true" aria-controls="overlay_menu" class="p-link layout-topbar-button">
-                    <i class="pi pi-bell"></i>
-                    <span>Notifications</span>
-                </button>
                 <OverlayPanel ref="notifs" :dismissable="false" :showCloseIcon="false">
                     <div class="p-4 custom-notification-panel">
                         <div class="flex align-items-center justify-content-between">
@@ -178,7 +194,7 @@ const isOutsideClicked = (event) => {
                         </div>
                         <hr />
                         <div class="notification-list custom-scrollbar">
-                            <div class="notification-item cursor-pointer" v-for="n in notificationsList" :key="n.id">
+                            <div class="notification-item" v-for="n in notificationsList" :key="n.id">
                                 <div class="notification-content">
                                     <p>
                                         {{ n.notification }}

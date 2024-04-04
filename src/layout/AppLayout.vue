@@ -19,9 +19,6 @@ const notificationType = ref(1);
 const notificationsList = ref([]);
 const outsideClickListener = ref(null);
 
-
-
-
 -watch(isSidebarActive, (newVal) => {
     if (newVal) {
         bindOutsideClickListener();
@@ -71,7 +68,7 @@ const isOutsideClicked = (event) => {
 
 <template>
     <div class="layout-wrapper" :class="containerClass">
-        <Toast position="bottom-right" />
+        <Toast position="bottom-left" />
         <app-topbar></app-topbar>
         <div class="layout-sidebar">
             <app-sidebar></app-sidebar>

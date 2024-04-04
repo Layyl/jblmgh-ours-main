@@ -424,6 +424,9 @@ const postAccept = async () => {
     }
     const response = await api.post(`/acceptPatient`, referralData.value, { headers: header });
 };
+const postSetToOngoing = async () => {
+    const response = await api.post(`/setToOngoing`, referralData.value, { headers: header });
+};
 const postDefer = async () => {
     const response = await api.post(`/deferPatient`, referralData.value, { headers: header });
 };
@@ -567,6 +570,7 @@ const getStatus = (referralStatus) => {
 };
 
 const handleNewChatMessage = (e) => {
+    console.log(e);
     if (e.referralHistoryID === refHisID.value) {
         console.log('message');
         messages.value.push({
@@ -597,7 +601,12 @@ const sendMessage = async () => {
             '/sendChat',
             {
                 message: newMessage.value,
-                referralHistoryID: referralData.value.referralHistoryID
+                referralHistoryID: referralData.value.referralHistoryID,
+                referralID: referralData.value.referralID,
+                referringHospital: referralData.value.referringHospital,
+                receivingHospital: referralData.value.receivingHospital,
+                fullName: referralData.value.lastName + ', ' + referralData.value.firstName + ' ' + referralData.value.middleName,
+                sendingUser: hciID.value
             },
             {
                 headers: {
@@ -635,6 +644,7 @@ onMounted(async () => {
     fetching.value = true;
     referralHistoryID.value = route.query.rhid;
     hciID.value = Cookies.get('hciID');
+
     console.log(hciID.value);
     await fetchCivilStatus();
     await fetchProvince();
@@ -647,7 +657,10 @@ onMounted(async () => {
     await fetchMunicipality();
     await fetchBarangay();
     await fetchMessages();
-
+    Cookies.set('referralID', referralData.value.referralID);
+    if (referralData.value.referralStatus == 1) {
+        await postSetToOngoing();
+    }
     userId.value = Cookies.get('uID');
     refHisID.value = referralData.value.referralHistoryID;
 
@@ -656,17 +669,18 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Button icon="pi pi-send" class="p-button-rounded p-button-primary fixed z-1 bottom-0 right-0 m-4" @click="handleChatboxClick" />
-    <div class="mb-5" v-if="hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus == 1">
+    <Button icon="pi pi-send" class="p-button-rounded p-button-primary fixed z-1 bottom-0 right-0 m-4" @click="handleChatboxClick"> </Button>
+
+    <div class="mb-5" v-if="hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
         <Menubar :model="jbl" />
     </div>
-    <div class="mb-5" v-if="hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus == 1">
+    <div class="mb-5" v-if="hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
         <Menubar :model="opcenMenu" />
     </div>
     <div class="mb-5" v-if="hciID == referralData.referringHospital">
         <Menubar :model="printOnly" />
     </div>
-    <div class="mb-5" v-if="hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus == 1">
+    <div class="mb-5" v-if="hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
         <Menubar :model="other" />
     </div>
     <div class="mb-5" v-if="hciID == referralData.receivingHospital && referralData.referralStatus > 3">
@@ -688,9 +702,13 @@ onMounted(async () => {
                     </div>
                 </div>
             </div>
-            <div class="input-container">
+            <div v-if="referralData.referralStatus <= 2" class="input-container">
                 <InputText v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type your message..." class="message-input" />
                 <Button :disabled="newMessage == ''" @click="sendMessage" icon="pi pi-send" class="send-button" />
+            </div>
+            <div v-else class="flex justify-content-center flex-wrap">
+                <Divider />
+                <p class="text-400 font-light font-italic">Chat unavailable due to referral status</p>
             </div>
         </div>
     </Sidebar>
@@ -803,7 +821,7 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infCont">Informant's Contact Number</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.informantContact" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.informantContact" />
                     </div>
                 </div>
             </div>
@@ -879,7 +897,7 @@ onMounted(async () => {
                         <label v-else for="province">Province <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <Dropdown v-else required disabled v-model="referralData.provinceID" :options="provinceList" optionLabel="description" optionValue="provinceID" @change="fetchMunicipality()" placeholder="Select Province" />
-                    </div> 
+                    </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infName">City/Municipality <span class="text-red-600">*</span></label>
@@ -978,7 +996,9 @@ onMounted(async () => {
             <div class="card mb-0">
                 <div class="flex justify-content-between mb-3">
                     <div>
-                        <h3 class="block text-green-600 font-medium mb-4">Vital Signs <Button v-if="hciID == referralData.referringHospital" type="button" @click="editVitals = true" size="small" icon="pi pi-pencil" severity="primary"></Button></h3>
+                        <h3 class="block text-green-600 font-medium mb-4">
+                            Vital Signs <Button v-if="hciID == referralData.referringHospital && referralData.referralStatus <= 2" type="button" @click="editVitals = true" size="small" icon="pi pi-pencil" severity="primary"></Button>
+                        </h3>
                     </div>
                 </div>
                 <div class="p-fluid formgrid grid">
