@@ -20,6 +20,7 @@ const referralData = ref({});
 const patientFiles = ref([]);
 const HCI = ref([]);
 const civilStatus = ref([]);
+const nationality = ref([]);
 const provinceList = ref([]);
 const municipalityList = ref([]);
 const barangayList = ref([]);
@@ -253,6 +254,10 @@ const fetchMessages = async () => {
 const fetchCivilStatus = async () => {
     const response = await api.get(`/fetchCivilStatus`, { headers: header });
     civilStatus.value = response.data;
+};
+const fetchNationality = async () => {
+    const response = await api.get(`/fetchNationality`, { headers: header });
+    nationality.value = response.data;
 };
 const fetchProvince = async () => {
     const response = await api.get(`/fetchProvince`, { headers: header });
@@ -647,18 +652,18 @@ onMounted(async () => {
 
     console.log(hciID.value);
     await fetchCivilStatus();
-    await fetchProvince();
     await fetchReferringHCIs();
     await fetchReferralReasons();
     await fetchDepartments();
     await fetchDoctors();
     await fetchReferralData();
+    await fetchNationality();
     await fetchProvince();
     await fetchMunicipality();
     await fetchBarangay();
     await fetchMessages();
     Cookies.set('referralID', referralData.value.referralID);
-    if (referralData.value.referralStatus == 1) {
+    if (referralData.value.referralStatus == 1 && referralData.value.referringHospital != hciID.value) {
         await postSetToOngoing();
     }
     userId.value = Cookies.get('uID');
@@ -708,7 +713,7 @@ onMounted(async () => {
             </div>
             <div v-else class="flex justify-content-center flex-wrap">
                 <Divider />
-                <p class="text-400 font-light font-italic">Chat unavailable due to referral status</p>
+                <p class="text-400 font-light font-italic">Sending messages are disabled due to referral status</p>
             </div>
         </div>
     </Sidebar>
@@ -877,6 +882,12 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <Dropdown v-else required disabled v-model="referralData.civilStatus" :options="civilStatus" optionLabel="Name" optionValue="CivilStatusID" placeholder="Select Civil Status" />
                     </div>
+                    <div class="field col-12 md:col-6">
+                        <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
+                        <label v-else>Nationality <span class="text-red-600">*</span></label>
+                        <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
+                        <Dropdown v-else required disabled v-model="referralData.nationality" :options="nationality" optionLabel="Description" optionValue="ID" placeholder="Select Nationality" />
+                    </div>
                     <Divider align="left" type="solid">
                         <b>Address</b>
                     </Divider>
@@ -896,19 +907,19 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="province">Province <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.provinceID" :options="provinceList" optionLabel="description" optionValue="provinceID" @change="fetchMunicipality()" placeholder="Select Province" />
+                        <Dropdown v-else required disabled v-model="referralData.provinceID" :options="provinceList" optionLabel="Description" optionValue="ProvinceID" @change="fetchMunicipality()" placeholder="Select Province" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infName">City/Municipality <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.municipalityID" :options="municipalityList" optionLabel="description" optionValue="municipalityID" @change="fetchBarangay()" placeholder="Select Municipality" />
+                        <Dropdown v-else required disabled v-model="referralData.municipalityID" :options="municipalityList" optionLabel="Description" optionValue="MunicipalityID" @change="fetchBarangay()" placeholder="Select Municipality" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infName">Barangay <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled readonly v-model="referralData.barangayID" :options="barangayList" optionLabel="name" optionValue="barangayID" placeholder="Select Barangay" />
+                        <Dropdown v-else required disabled readonly v-model="referralData.barangayID" :options="barangayList" optionLabel="Name" optionValue="Id" placeholder="Select Barangay" />
                     </div>
                 </div>
             </div>

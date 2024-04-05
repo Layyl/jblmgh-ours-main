@@ -13,12 +13,12 @@ const toast = useToast();
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 const hciID = ref('');
 const newReferral = ref(false);
-
 const patientID = ref('');
 const patientData = ref({});
 const loading = ref(false);
 const HCI = ref([]);
 const civilStatus = ref([]);
+const nationality = ref([]);
 const provinceList = ref([]);
 const municipalityList = ref([]);
 const barangayList = ref([]);
@@ -80,10 +80,16 @@ const fetchCivilStatus = async () => {
     const response = await api.get(`/fetchCivilStatus`, { headers: header });
     civilStatus.value = response.data;
 };
+const fetchNationality = async () => {
+    const response = await api.get(`/fetchNationality`, { headers: header });
+    nationality.value = response.data;
+};
+
 const fetchProvince = async () => {
     const response = await api.get(`/fetchProvince`, { headers: header });
     provinceList.value = response.data;
 };
+
 const fetchMunicipality = async () => {
     const response = await api.get(`/fetchMunicipality?ProvinceID=${patientData.value.provinceID}`, { headers: header });
     municipalityList.value = response.data;
@@ -98,6 +104,7 @@ const fetchReferringHCIs = async () => {
     const response = await api.get(`/fetchHealthCareInstitution?hciID=${hciID.value}`, { headers: header });
     HCI.value = response.data;
 };
+
 const fetchReferralReasons = async () => {
     const response = await api.get(`/fetchReferralReasons`, { headers: header });
     reasonForTransfer.value = response.data;
@@ -240,6 +247,7 @@ onMounted(async () => {
     hciID.value = Cookies.get('hciID');
 
     await fetchCivilStatus();
+    await fetchNationality();
     await fetchProvince();
     await fetchReferringHCIs();
     await fetchReferralReasons();
@@ -339,6 +347,10 @@ onMounted(async () => {
                         <label for="civilStat">Civil Status <span class="text-red-600">*</span></label>
                         <Dropdown required v-model="patientData.civilStatus" :options="civilStatus" optionLabel="Name" optionValue="CivilStatusID" placeholder="Select Civil Status" />
                     </div>
+                    <div class="field col-12 md:col-6">
+                        <label>Nationality <span class="text-red-600">*</span></label>
+                        <Dropdown required v-model="patientData.nationality" :options="nationality" optionLabel="Description" optionValue="ID" placeholder="Select Nationality" />
+                    </div>
                     <Divider align="left" type="solid">
                         <b>Address</b>
                     </Divider>
@@ -352,7 +364,7 @@ onMounted(async () => {
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="province">Province <span class="text-red-600">*</span></label>
-                        <Dropdown required v-model="patientData.provinceID" :options="provinceList" optionLabel="description" optionValue="provinceID" @change="fetchMunicipality()" placeholder="Select Province" />
+                        <Dropdown required v-model="patientData.provinceID" :options="provinceList" optionLabel="Description" optionValue="ProvinceID" @change="fetchMunicipality()" placeholDer="Select Province" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="infName">City/Municipality <span class="text-red-600">*</span></label>
@@ -361,15 +373,15 @@ onMounted(async () => {
                             :disabled="!patientData.provinceID"
                             v-model="patientData.municipalityID"
                             :options="municipalityList"
-                            optionLabel="description"
-                            optionValue="municipalityID"
+                            optionLabel="Description"
+                            optionValue="MunicipalityID"
                             @change="fetchBarangay"
                             placeholder="Select Municipality"
                         />
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="infName">Barangay <span class="text-red-600">*</span></label>
-                        <Dropdown required :disabled="!patientData.municipalityID" v-model="patientData.barangayID" :options="barangayList" optionLabel="name" optionValue="barangayID" placeholder="Select Barangay" />
+                        <Dropdown required :disabled="!patientData.municipalityID" v-model="patientData.barangayID" :options="barangayList" optionLabel="Name" optionValue="Id" placeholder="Select Barangay" />
                     </div>
                 </div>
             </div>

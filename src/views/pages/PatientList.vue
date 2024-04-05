@@ -31,7 +31,7 @@ const getStatus = (referralStatus) => {
         case 4:
             return 'Given Management';
         case 5:
-            return 'Px Refused Transfer)';
+            return 'Px Refused Transfer';
         case 6:
             return 'Transferred to OPCEN';
         case 7:

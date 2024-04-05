@@ -67,7 +67,6 @@ onMounted(() => {});
         <div class="col-12">
             <div class="card">
                 <DataTable :value="patients.patients" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" :loading="loading" scrollDirection="both" class="mt-3">
-                    <Column field="patientID" header="Patient ID"></Column>
                     <Column field="lastName" header="Last Name"></Column>
                     <Column field="firstName" header="First Name"></Column>
                     <Column field="middleName" header="Middle Name"></Column>
