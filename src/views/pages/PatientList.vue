@@ -121,6 +121,10 @@ const redirectToViewPatient = (referralID, referralHistoryID) => {
     router.push(`/ours/viewPatientForm?rid=${referralID}&rhid=${referralHistoryID}`);
 };
 
+const showCancelButton = (referralHistory) => {
+    return referralHistory.some((history) => history.referralStatus <= 2);
+};
+
 const fetchInboundPatients = async () => {
     fetching.value = true;
     const response = await api.get(`/fetchInboundPatients?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
@@ -146,6 +150,11 @@ const clear = async (tab) => {
         outboundMiddleName.value = '';
         fetchOutboundPatients();
     }
+};
+
+const cancelReferral = async (referralID) => {
+    await api.post(`/cancelReferral?`, { referralID: referralID }, { headers: header });
+    fetchOutboundPatients();
 };
 
 onMounted(async () => {
@@ -272,6 +281,11 @@ onMounted(async () => {
                             <Column class="uppercase" field="gender" header="Gender">
                                 <template #body="slotProps">
                                     {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
+                                </template>
+                            </Column>
+                            <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
+                                <template #body="slotProps">
+                                    <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="cancelReferral(slotProps.data.referralID)" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
                                 </template>
                             </Column>
                             <template #expansion="slotProps">

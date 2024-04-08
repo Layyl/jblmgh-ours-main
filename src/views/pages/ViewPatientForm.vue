@@ -662,7 +662,7 @@ onMounted(async () => {
     await fetchMunicipality();
     await fetchBarangay();
     await fetchMessages();
-    Cookies.set('referralID', referralData.value.referralID);
+    Cookies.set('referralID', referralData.value.referralHistoryID);
     if (referralData.value.referralStatus == 1 && referralData.value.referringHospital != hciID.value) {
         await postSetToOngoing();
     }

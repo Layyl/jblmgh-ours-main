@@ -64,6 +64,7 @@ const showNotification = (e) => {
         } else if (e.notificationType == '6') {
             toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 300000 });
         } else if (e.notificationType == '7') {
+            console.log(e);
             if (e.referralHistoryID != refID.value) {
                 toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 300000 });
             }
