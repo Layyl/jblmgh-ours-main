@@ -16,7 +16,8 @@ const model = ref([
         items: [
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/ours/dashboard' },
             { label: 'Patient Registration', icon: 'pi pi-fw pi-user-plus', to: '/ours/addPatient' },
-            { label: 'Patient List', icon: 'pi pi-fw pi-users', to: '/ours/patientlist' }
+            { label: 'Inbound Patient List', icon: 'pi pi-fw pi-arrow-down', to: '/ours/patientlist' },
+            { label: 'Outbound Patients List', icon: 'pi pi-fw pi-arrow-up', to: '/ours/outboundPatients' }
         ]
     }
 ]);

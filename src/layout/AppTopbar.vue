@@ -33,7 +33,6 @@ const showNotifs = (event) => {
 
 const onChangeTheme = (theme, mode) => {
     isDark.value = !isDark.value;
-    console.log(isDark.value);
     const elementId = 'theme-css';
     const linkElement = document.getElementById(elementId);
     const cloneLinkElement = linkElement.cloneNode(true);
@@ -49,24 +48,22 @@ const onChangeTheme = (theme, mode) => {
 };
 
 const showNotification = (e) => {
-    console.log(e);
     if (e.sent_to == hospID.value) {
         if (e.notificationType == '1') {
-            toast.add({ severity: 'success', summary: 'Accepted', detail: `${e.notification}`, life: 300000 });
+            toast.add({ severity: 'success', summary: 'Accepted', detail: `${e.notification}`, life: 5000 });
         } else if (e.notificationType == '2') {
-            toast.add({ severity: 'warn', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 300000 });
+            toast.add({ severity: 'warn', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 5000 });
         } else if (e.notificationType == '3') {
-            toast.add({ severity: 'warn', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 300000 });
+            toast.add({ severity: 'warn', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 5000 });
         } else if (e.notificationType == '4') {
-            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 300000 });
+            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 5000 });
         } else if (e.notificationType == '5') {
-            toast.add({ severity: 'error', summary: 'Referral Deferred', detail: `${e.notification}`, life: 300000 });
+            toast.add({ severity: 'error', summary: 'Referral Deferred', detail: `${e.notification}`, life: 5000 });
         } else if (e.notificationType == '6') {
-            toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 300000 });
+            toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 5000 });
         } else if (e.notificationType == '7') {
-            console.log(e);
-            if (e.referralHistoryID != refID.value) {
-                toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 300000 });
+            if (e.referralID != refID.value) {
+                toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 5000 });
             }
         }
         fetchNotifications();
@@ -85,14 +82,16 @@ window.Echo = new Echo({
 });
 
 window.Echo.channel('notification').listen('NewNotification', showNotification);
-window.Echo.connector.pusher.connection.bind('connected', function () {
-    console.log('Notifications Connected');
-});
+window.Echo.connector.pusher.connection.bind('connected', function () {});
 
 const fetchNotifications = async () => {
     const response = await api.get(`/fetchNotifications?user_id=${hospID.value}`, { headers: header });
     notificationsList.value = response.data.notifications;
-    console.log(notificationsList.value);
+};
+
+const setToExpired = async () => {
+    const response = await api.post(`/setToExpired`, '', { headers: header });
+    console.log('set to expired');
 };
 
 onMounted(() => {
@@ -103,6 +102,7 @@ onMounted(() => {
         }
     }, 1000);
 
+    setToExpired();
     fetchNotifications();
     bindOutsideClickListener();
     checkTokenAndClearSession();

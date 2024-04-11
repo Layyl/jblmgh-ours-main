@@ -9,9 +9,9 @@ const router = useRouter();
 const inboundPatients = ref([]);
 const outboundPatients = ref([]);
 const hciID = ref('');
-const inboundLastName = ref('');
-const inboundFirstName = ref('');
-const inboundMiddleName = ref('');
+const outboundLastName = ref('');
+const outboundFirstName = ref('');
+const outboundMiddleName = ref('');
 const tableSkeleton = ref(new Array(5));
 const expandedRows = ref([]);
 const fetching = ref(false);
@@ -122,10 +122,10 @@ const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
 
-const fetchInboundPatients = async () => {
+const fetchOutboundPatients = async () => {
     fetching.value = true;
-    const response = await api.get(`/fetchInboundPatients?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
-    inboundPatients.value = response.data;
+    const response = await api.get(`/fetchOutboundPatients?lastName=${outboundLastName.value}&firstName=${outboundFirstName.value}&middleName=${outboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
+    outboundPatients.value = response.data;
     fetching.value = false;
 };
 
@@ -151,7 +151,7 @@ const cancelReferral = async (referralID) => {
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
     console.log(hciID.value);
-    await fetchInboundPatients();
+    await fetchOutboundPatients();
 });
 </script>
 
@@ -159,19 +159,19 @@ onMounted(async () => {
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
             <div class="card">
-                <h3 class="block text-500 m-0 font-">Inbound Patients List</h3>
+                <h3 class="block text-500 m-0 font-">Outbound Patients List</h3>
             </div>
         </div>
 
         <div class="col-12">
             <div class="card">
-                <div class="flex flex-column md:flex-row gap-2 align-items-center">
-                    <InputText @keyup.enter="fetchInboundPatients" class="w-full mt-1 mx-2" id="lastName" placeholder="Last Name" type="text" v-model="inboundLastName" />
-                    <InputText @keyup.enter="fetchInboundPatients" class="w-full mt-1 mx-2" id="firstName" placeholder="First Name" type="text" v-model="inboundFirstName" />
-                    <InputText @keyup.enter="fetchInboundPatients" class="w-full mt-1 mx-2" id="middleName" placeholder="Middle Name" type="text" v-model="inboundMiddleName" />
+                <div class="flex flex-column sm:flex-row gap-2 align-items-center">
+                    <InputText @keyup.enter="fetchOutboundPatients" class="w-full mt-1 mx-2" id="lastName" placeholder="Last Name" type="text" v-model="outboundLastName" />
+                    <InputText @keyup.enter="fetchOutboundPatients" class="w-full mt-1 mx-2" id="firstName" placeholder="First Name" type="text" v-model="outboundFirstName" />
+                    <InputText @keyup.enter="fetchOutboundPatients" class="w-full mt-1 mx-2" id="middleName" placeholder="Middle Name" type="text" v-model="outboundMiddleName" />
                     <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
-                        <Button @click="fetchInboundPatients" class="w-full mx-2" type="button" icon="pi pi-search" label="Search" />
-                        <Button @click="clear(1)" class="w-full mx-2" severity="danger" type="button" icon="pi pi-times" label="Clear" />
+                        <Button @click="fetchOutboundPatients" class="w-full mx-2" type="button" icon="pi pi-search" label="Search" />
+                        <Button @click="clear(2)" class="w-full mx-2" severity="danger" type="button" icon="pi pi-times" label="Clear" />
                     </div>
                 </div>
                 <DataTable v-if="fetching" :value="tableSkeleton">
@@ -201,7 +201,9 @@ onMounted(async () => {
                         </template>
                     </Column>
                 </DataTable>
-                <DataTable v-else :value="inboundPatients.referrals" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" scrollDirection="both" class="mt-3">
+
+                <DataTable v-else v-model:expandedRows="expandedRows" :value="outboundPatients.referrals" dataKey="referralID" tableStyle="min-width: 60rem">
+                    <Column expander style="width: 5rem" />
                     <Column class="uppercase" field="formatted_created_at" header="Date Referred"></Column>
                     <Column class="uppercase" field="fullName" header="Name"></Column>
                     <Column class="uppercase" field="gender" header="Gender">
@@ -209,19 +211,57 @@ onMounted(async () => {
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
                         </template>
                     </Column>
-                    <Column class="uppercase" field="referringHospitalDescription" header="Referring Hospital"></Column>
-                    <Column class="uppercase" header="Referral Status">
-                        <template #body="slotProps">
-                            <Tag v-if="slotProps.data.arrived !== 1" :value="getStatus(slotProps.data.referralStatus)" :class="getStatusClass(slotProps.data.referralStatus)" />
-                            <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus > 3" value="Deferred - Arrived" class="p-tag-danger" />
-                            <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus <= 3" value="Arrived" class="p-tag-success" />
-                        </template>
-                    </Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
-                            <Button @click="redirectToViewPatient(slotProps.data.encryptedReferralID, slotProps.data.encryptedReferralHistoryID)" icon="pi pi-file" label="View" class="p-button p-button-green"></Button>
+                            <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="cancelReferral(slotProps.data.referralID)" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
                         </template>
                     </Column>
+                    <template #expansion="slotProps">
+                        <div class="pt-5">
+                            <h5>Referral History</h5>
+
+                            <Timeline
+                                :value="slotProps.data.referralHistory"
+                                class="customized-timeline"
+                                :pt="{
+                                    opposite: {
+                                        style: 'display:none;'
+                                    }
+                                }"
+                            >
+                                <template #marker="slotProps">
+                                    <span class="flex w-1rem h-1rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :class="getStatusClassTL(slotProps.item.referralStatus)"></span>
+                                </template>
+                                <template #content="slotProps">
+                                    <Card
+                                        class="mt-3"
+                                        style="width: 65vw"
+                                        :pt="{
+                                            root: {
+                                                style: 'box-shadow:none; border:1px #e6e6e6 solid;'
+                                            },
+                                            title: {
+                                                style: 'font-size:1.2rem;'
+                                            }
+                                        }"
+                                    >
+                                        <template #title>
+                                            {{ slotProps.item.receivingHospitalDescription }}
+                                        </template>
+                                        <template #subtitle>
+                                            {{ slotProps.item.formatted_created_at }}
+                                        </template>
+                                        <template #content>
+                                            <p>
+                                                Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
+                                            </p>
+                                            <Button @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
+                                        </template>
+                                    </Card>
+                                </template>
+                            </Timeline>
+                        </div>
+                    </template>
                 </DataTable>
             </div>
         </div>

@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRoute } from 'vue-router';
@@ -16,6 +15,7 @@ const toast = useToast();
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 const hciID = ref('');
 const referralHistoryID = ref('');
+const referralID = ref('');
 const referralData = ref({});
 const patientFiles = ref([]);
 const HCI = ref([]);
@@ -42,6 +42,7 @@ const accept = ref(false);
 const defer = ref(false);
 const returnOPCEN = ref(false);
 const opcen = ref(false);
+const returnJBL = ref(false);
 const reopenModal = ref(false);
 const refer = ref(false);
 const referOPCEN = ref(false);
@@ -139,25 +140,9 @@ const jbl = ref([
 ]);
 const opcenMenu = ref([
     {
-        label: 'Defer Patient',
-        icon: 'pi pi-times',
+        label: 'Actions',
+        icon: 'pi pi-cog',
         items: [
-            {
-                label: 'Referring HCI Given Management',
-                command: () => {
-                    referralData.value.deferReason = 4;
-                    defer.value = true;
-                    console.log(referralData.value);
-                }
-            },
-            {
-                label: 'Patient Refused Transfer',
-                command: () => {
-                    referralData.value.deferReason = 5;
-                    defer.value = true;
-                    console.log(referralData.value);
-                }
-            },
             {
                 label: 'Refer to Other HCI',
                 command: () => {
@@ -167,7 +152,7 @@ const opcenMenu = ref([
             {
                 label: 'Return to JBLMGH',
                 command: () => {
-                    opcen.value = true;
+                    returnJBL.value = true;
                 }
             }
         ]
@@ -229,6 +214,7 @@ const printOnly = ref([
         }
     }
 ]);
+
 const fetchReferralData = async () => {
     const response = await api.get(`/fetchReferralData?referralHistoryID=${referralHistoryID.value}&hciID=${hciID.value}`, { headers: header });
     const referral = response.data.referrals[0];
@@ -248,7 +234,7 @@ const fetchReferralData = async () => {
     convertCmToFeetAndInches(referral.height);
 };
 const fetchMessages = async () => {
-    const response = await api.get(`/fetchReferralMessages?referralHistoryID=${referralHistoryID.value}`, { headers: header });
+    const response = await api.get(`/fetchReferralMessages?referralID=${referralID.value}`, { headers: header });
     messages.value = response.data;
 };
 const fetchCivilStatus = async () => {
@@ -438,6 +424,19 @@ const postDefer = async () => {
 const returnToOPCEN = async () => {
     const response = await api.post(`/transferToOPCEN`, referralData.value, { headers: header });
 };
+const handleReturnOPCENClick = async () => {
+    await setLoadingState('Return to OPCEN.', 'Referring patient back to OPCEN. Please wait');
+    await returnToOPCEN();
+    hideLoadingModal('Successfully Returned to OPCEN!🎉', 'Referral returned to OPCEN successfully.');
+};
+const returnToJBL = async () => {
+    const response = await api.post(`/returnToJBLMGH`, referralData.value, { headers: header });
+};
+const handleReturnClick = async () => {
+    await setLoadingState('Return to JBLMGH.', 'Referring patient back to JBLMGH. Please wait');
+    await returnToJBL();
+    hideLoadingModal('Successfully Returned to OPCEN!🎉', 'Referral returned to JBLMGH successfully.');
+};
 const handleAccept = async () => {
     await setLoadingState('Accepting Patient.', 'Accepting patient. Please wait');
     await postAccept();
@@ -447,11 +446,6 @@ const handleDeferClick = async () => {
     await setLoadingState('Deferring Patient.', 'Deferring patient. Please wait');
     await postDefer();
     hideLoadingModal('Successfully Deferred!🎉', 'Referral is successfully deferred.');
-};
-const handleReturnOPCENClick = async () => {
-    await setLoadingState('Return to OPCEN.', 'Referring patient back to OPCEN. Please wait');
-    await returnToOPCEN();
-    hideLoadingModal('Successfully Returned to OPCEN!🎉', 'Referral returned to OPCEN successfully.');
 };
 const cancelDefer = () => {
     referralData.value.deferRemarks = '';
@@ -573,10 +567,9 @@ const getStatus = (referralStatus) => {
             return 'Unknown';
     }
 };
-
 const handleNewChatMessage = (e) => {
     console.log(e);
-    if (e.referralHistoryID === refHisID.value) {
+    if (e.referralID == refHisID.value) {
         console.log('message');
         messages.value.push({
             message: e.message,
@@ -591,7 +584,6 @@ const handleNewChatMessage = (e) => {
         }, 50);
     }
 };
-
 const scrollToBottom = () => {
     const div = document.getElementById('messages-container');
     div.scrollTo({
@@ -599,14 +591,12 @@ const scrollToBottom = () => {
         behavior: 'smooth'
     });
 };
-
 const sendMessage = async () => {
     const response = await api
         .post(
             '/sendChat',
             {
                 message: newMessage.value,
-                referralHistoryID: referralData.value.referralHistoryID,
                 referralID: referralData.value.referralID,
                 referringHospital: referralData.value.referringHospital,
                 receivingHospital: referralData.value.receivingHospital,
@@ -627,7 +617,6 @@ const sendMessage = async () => {
             console.log(error);
         });
 };
-
 window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
@@ -638,7 +627,6 @@ window.Echo = new Echo({
     disableStats: true,
     forceTLS: false
 });
-
 onMounted(async () => {
     window.Echo.channel('chat').listen('NewChatMessage', handleNewChatMessage);
 
@@ -647,6 +635,7 @@ onMounted(async () => {
     });
 
     fetching.value = true;
+    referralID.value = route.query.rid;
     referralHistoryID.value = route.query.rhid;
     hciID.value = Cookies.get('hciID');
 
@@ -662,12 +651,12 @@ onMounted(async () => {
     await fetchMunicipality();
     await fetchBarangay();
     await fetchMessages();
-    Cookies.set('referralID', referralData.value.referralHistoryID);
+    Cookies.set('referralID', referralData.value.referralID);
     if (referralData.value.referralStatus == 1 && referralData.value.referringHospital != hciID.value) {
         await postSetToOngoing();
     }
     userId.value = Cookies.get('uID');
-    refHisID.value = referralData.value.referralHistoryID;
+    refHisID.value = referralData.value.referralID;
 
     fetching.value = false;
 });
@@ -688,7 +677,7 @@ onMounted(async () => {
     <div class="mb-5" v-if="hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
         <Menubar :model="other" />
     </div>
-    <div class="mb-5" v-if="hciID == referralData.receivingHospital && referralData.referralStatus > 3">
+    <div class="mb-5" v-if="(hciID == referralData.receivingHospital && referralData.referralStatus == 4) || referralData.referralStatus == 5">
         <Menubar :model="reopen" />
     </div>
 
@@ -1167,14 +1156,14 @@ onMounted(async () => {
             </div>
         </Dialog>
 
-        <!-- TRANSFER TO OPCEN -->
-        <Dialog closable v-model:visible="opcen" modal header="Transfer to OPCEN" :closable="false" :style="{ width: '26rem' }">
+        <!-- RETURN TO JBLMGH -->
+        <Dialog closable v-model:visible="returnJBL" modal header="Transfer to OPCEN" :closable="false" :style="{ width: '26rem' }">
             <div class="align-items-center gap-3 mb-3">
-                <p>Are you sure you want to transfer patient to OPCEN?</p>
+                <p>Are you sure you want to return referral to JBLMGH?</p>
             </div>
             <div class="flex justify-content-end gap-2">
-                <Button @click="handleOPCENClick" type="button" label="Transfer" severity="primary"></Button>
-                <Button @click="cancelOPCEN" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
+                <Button @click="handleReturnClick" type="button" label="Return" severity="primary"></Button>
+                <Button @click="cancelReturn" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
             </div>
         </Dialog>
 

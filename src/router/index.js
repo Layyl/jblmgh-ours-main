@@ -86,6 +86,11 @@ const router = createRouter({
                     component: () => import('@/views/pages/AddPatient.vue')
                 },
                 {
+                    path: '/ours/outboundPatients',
+                    name: 'outboundPatients',
+                    component: () => import('@/views/pages/OutboundPatients.vue')
+                },
+                {
                     path: '/ours/addPatientForm',
                     name: 'addPatientForm',
                     component: () => import('@/views/pages/AddPatientForm.vue')

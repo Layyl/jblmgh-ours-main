@@ -7,18 +7,12 @@ import AppTopbar from './AppTopbar.vue';
 import AppFooter from './AppFooter.vue';
 import AppSidebar from './AppSidebar.vue';
 import api from '../api';
-// import AppConfig from './AppConfig.vue';
 import { useLayout } from '@/layout/composables/layout';
 import { useToast } from 'primevue/usetoast';
-
 const toast = useToast();
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
-
-const notificationType = ref(1);
-const notificationsList = ref([]);
 const outsideClickListener = ref(null);
-
 -watch(isSidebarActive, (newVal) => {
     if (newVal) {
         bindOutsideClickListener();
@@ -26,7 +20,6 @@ const outsideClickListener = ref(null);
         unbindOutsideClickListener();
     }
 });
-
 const containerClass = computed(() => {
     return {
         'layout-theme-light': layoutConfig.darkTheme.value === 'light',
@@ -80,7 +73,7 @@ const isOutsideClicked = (event) => {
             </div>
             <app-footer></app-footer>
         </div>
-        <app-config></app-config>
+        <!-- <app-config></app-config> -->
         <div class="layout-mask"></div>
     </div>
 </template>
