@@ -38,17 +38,20 @@ onMounted(async () => {
 });
 watch(hciID, (newVal) => {
     if (newVal === '217') {
-        model.value[0].items.push({
-            label: 'Settings',
-            icon: 'pi pi-fw pi-cog',
-            items: [
-                {
-                    label: 'Manage Users',
-                    icon: 'pi pi-user-edit',
-                    to: '/ours/manageUsers'
-                }
-            ]
-        });
+        model.value[0].items.push(
+            { label: 'Patient Master List', icon: 'pi pi-fw pi-users', to: '/ours/patientMasterfile' },
+            {
+                label: 'Settings',
+                icon: 'pi pi-fw pi-cog',
+                items: [
+                    {
+                        label: 'Manage Users',
+                        icon: 'pi pi-user-edit',
+                        to: '/ours/manageUsers'
+                    }
+                ]
+            }
+        );
     }
 });
 </script>

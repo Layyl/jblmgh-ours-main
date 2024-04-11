@@ -6,17 +6,11 @@ import { useRouter } from 'vue-router';
 import api from '../../api';
 
 const router = useRouter();
-const inboundPatients = ref([]);
-const outboundPatients = ref([]);
+const masterfile = ref([]);
 const hciID = ref('');
-const outboundLastName = ref('');
-const outboundFirstName = ref('');
-const outboundMiddleName = ref('');
-const loading = ref(false);
-const loadingHeader = ref('');
-const loadingText = ref('');
-const forCancel = ref('');
-const cancelModal = ref(false);
+const masterfileLastName = ref('');
+const masterfileFirstName = ref('');
+const masterfileMiddleName = ref('');
 const tableSkeleton = ref(new Array(5));
 const expandedRows = ref([]);
 const fetching = ref(false);
@@ -46,7 +40,6 @@ const getStatus = (referralStatus) => {
             return 'Unknown';
     }
 };
-
 const getStatusClass = (referralStatus) => {
     switch (referralStatus) {
         case 1:
@@ -71,7 +64,6 @@ const getStatusClass = (referralStatus) => {
             return 'p-tag-secondary';
     }
 };
-
 const getStatusClassTL = (referralStatus) => {
     switch (referralStatus) {
         case 1:
@@ -96,7 +88,6 @@ const getStatusClassTL = (referralStatus) => {
             return 'p-tag-secondary';
     }
 };
-
 const getStatusClassText = (referralStatus) => {
     switch (referralStatus) {
         case 1:
@@ -123,74 +114,36 @@ const getStatusClassText = (referralStatus) => {
 };
 
 const redirectToViewPatient = (referralID, referralHistoryID) => {
-    router.push(`/ours/viewPatientForm?rid=${referralID}&rhid=${referralHistoryID}`);
+    router.push(`/ours/ViewPatientMasterfile?rid=${referralID}&rhid=${referralHistoryID}`);
 };
 
 const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
 
-const fetchOutboundPatients = async () => {
+const fetchMasterfile = async () => {
     fetching.value = true;
-    const response = await api.get(`/fetchOutboundPatients?lastName=${outboundLastName.value}&firstName=${outboundFirstName.value}&middleName=${outboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
-    outboundPatients.value = response.data;
+    const response = await api.get(`/fetchMasterfile?lastName=${masterfileLastName.value}&firstName=${masterfileFirstName.value}&middleName=${masterfileMiddleName.value}&hciID=${hciID.value}`, { headers: header });
+    masterfile.value = response.data;
     fetching.value = false;
 };
 
 const clear = async (tab) => {
-    if (tab == '1') {
-        inboundLastName.value = '';
-        inboundFirstName.value = '';
-        inboundMiddleName.value = '';
-        fetchInboundPatients();
-    } else {
-        outboundLastName.value = '';
-        outboundFirstName.value = '';
-        outboundMiddleName.value = '';
-        fetchOutboundPatients();
-    }
+    masterfileLastName.value = '';
+    masterfileFirstName.value = '';
+    masterfileMiddleName.value = '';
+    fetchMasterfile();
 };
 
 const cancelReferral = async (referralID) => {
-    await api.post(`/cancelReferral`, { referralID: referralID }, { headers: header });
-    fetchOutboundPatients();
-};
-
-const setLoadingState = async (header, text) => {
-    loading.value = true;
-    loadingHeader.value = header;
-    loadingText.value = text;
-};
-
-const hideLoadingModal = (header, text) => {
-    loadingHeader.value = header;
-    loadingText.value = text;
-    loadingProgress.value = false;
-    setTimeout(() => {
-        loading.value = false;
-        location.reload();
-    }, 1000);
-};
-
-const handleCancelButton = (referralID) => {
-    forCancel.value = referralID;
-    cancelModal.value = true;
-};
-
-const handleCancelClick = async () => {
-    await setLoadingState('Cancelling...', 'Cancelling referral. Please wait');
-    cancelReferral(forCancel.value);
-    hideLoadingModal('Successfully Cancelled!🎉', 'Referral is successfully cancelled.');
-};
-
-const cancel = () => {
-    cancelModal.value = false;
+    await api.post(`/cancelReferral?`, { referralID: referralID }, { headers: header });
+    fetchMasterfile();
 };
 
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
     console.log(hciID.value);
-    await fetchOutboundPatients();
+    await fetchMasterfile();
 });
 </script>
 
@@ -198,18 +151,18 @@ onMounted(async () => {
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
             <div class="card">
-                <h3 class="block text-500 m-0 font-">Outbound Patients List</h3>
+                <h3 class="block text-500 m-0 font-">Referrals Masterlist</h3>
             </div>
         </div>
 
         <div class="col-12">
             <div class="card">
                 <div class="flex flex-column sm:flex-row gap-2 align-items-center">
-                    <InputText @keyup.enter="fetchOutboundPatients" class="w-full mt-1 mx-2" id="lastName" placeholder="Last Name" type="text" v-model="outboundLastName" />
-                    <InputText @keyup.enter="fetchOutboundPatients" class="w-full mt-1 mx-2" id="firstName" placeholder="First Name" type="text" v-model="outboundFirstName" />
-                    <InputText @keyup.enter="fetchOutboundPatients" class="w-full mt-1 mx-2" id="middleName" placeholder="Middle Name" type="text" v-model="outboundMiddleName" />
+                    <InputText @keyup.enter="fetchMasterfile" class="w-full mt-1 mx-2" id="lastName" placeholder="Last Name" type="text" v-model="masterfileLastName" />
+                    <InputText @keyup.enter="fetchMasterfile" class="w-full mt-1 mx-2" id="firstName" placeholder="First Name" type="text" v-model="masterfileFirstName" />
+                    <InputText @keyup.enter="fetchMasterfile" class="w-full mt-1 mx-2" id="middleName" placeholder="Middle Name" type="text" v-model="masterfileMiddleName" />
                     <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
-                        <Button @click="fetchOutboundPatients" class="w-full mx-2" type="button" icon="pi pi-search" label="Search" />
+                        <Button @click="fetchMasterfile" class="w-full mx-2" type="button" icon="pi pi-search" label="Search" />
                         <Button @click="clear(2)" class="w-full mx-2" severity="danger" type="button" icon="pi pi-times" label="Clear" />
                     </div>
                 </div>
@@ -234,14 +187,9 @@ onMounted(async () => {
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
-                    <Column :style="{ width: '50px' }" field="referringHospitalDescription" header="Actions">
-                        <template #body>
-                            <Skeleton></Skeleton>
-                        </template>
-                    </Column>
                 </DataTable>
 
-                <DataTable v-else v-model:expandedRows="expandedRows" :value="outboundPatients.referrals" dataKey="referralID" tableStyle="min-width: 60rem">
+                <DataTable v-else v-model:expandedRows="expandedRows" :value="masterfile.referrals" dataKey="referralID" tableStyle="min-width: 60rem">
                     <Column expander style="width: 5rem" />
                     <Column class="uppercase" field="formatted_created_at" header="Date Referred"></Column>
                     <Column class="uppercase" field="fullName" header="Name"></Column>
@@ -252,7 +200,7 @@ onMounted(async () => {
                     </Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
-                            <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="handleCancelButton(slotProps.data.referralID)" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
+                            <Button @click="redirectToViewPatient(slotProps.data.EncryptedReferralID, slotProps.data.encryptedReferralHistoryID)" label="View"></Button>
                         </template>
                     </Column>
                     <template #expansion="slotProps">
@@ -294,7 +242,6 @@ onMounted(async () => {
                                             <p>
                                                 Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
                                             </p>
-                                            <Button @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
                                         </template>
                                     </Card>
                                 </template>
@@ -305,23 +252,4 @@ onMounted(async () => {
             </div>
         </div>
     </div>
-
-    <!-- LOADING  -->
-    <Dialog v-model:visible="loading" modal :header="loadingHeader" :closable="false" :style="{ width: '25rem' }">
-        <div class="flex align-items-center gap-3 mb-3">
-            <p>{{ loadingText }}</p>
-        </div>
-        <ProgressBar v-if="loadingProgress" mode="indeterminate" style="height: 6px"></ProgressBar>
-    </Dialog>
-
-    <!-- CANCEL REFERRAL -->
-    <Dialog closable v-model:visible="cancelModal" modal header="Defer Patient" :closable="false" :style="{ width: '26rem' }">
-        <div class="align-items-center gap-3 mb-3">
-            <p>Are you sure you want to cancel referral?</p>
-        </div>
-        <div class="flex justify-content-end gap-2">
-            <Button @click="handleCancelClick" type="button" label="Submit" severity="primary"></Button>
-            <Button @click="cancel" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
-        </div>
-    </Dialog>
 </template>
