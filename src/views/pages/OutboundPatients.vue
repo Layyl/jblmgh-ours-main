@@ -292,7 +292,9 @@ onMounted(async () => {
                                         </template>
                                         <template #content>
                                             <p>
-                                                Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
+                                                Status: <span v-if="slotProps.item.arrived != 1" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
+                                                <span v-else-if="slotProps.item.arrived == 1 && slotProps.item.referralStatus > 3" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">Defferred - Arrived</span>
+                                                <span v-else-if="slotProps.item.arrived == 1 && slotProps.item.referralStatus <= 3" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">Accepted - Arrived</span>
                                             </p>
                                             <Button @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
                                         </template>
