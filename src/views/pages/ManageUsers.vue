@@ -18,6 +18,8 @@ const saving = ref(false);
 const savingHeader = ref('');
 const savingText = ref('');
 const savingProgress = ref(true);
+const deleteModal = ref(false);
+const idToDelete = ref('');
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 
 const newUser = ref({
@@ -35,6 +37,7 @@ const redirectToAddPatient = (patientId) => {
     const route = patientId ? `/ours/addPatientForm?id=${patientId}` : `/ours/addPatientForm?id=new`;
     router.push(route);
 };
+
 const searchPatient = async () => {
     loading.value = true;
     await axios({
@@ -48,10 +51,12 @@ const searchPatient = async () => {
         loading.value = false;
     });
 };
+
 const fetchReferringHCIs = async () => {
     const response = await api.get(`/fetchHealthCareInstitution`, { headers: header });
     hciList.value = response.data;
 };
+
 const fetchSelectedReferringHCI = async () => {
     const response = await api.get(`/fetchHealthCareInstitution?HealthFacilityCodeShort=${newUser.value.hciID}`, { headers: header });
     selectedHCI.value = response.data[0];
@@ -72,6 +77,7 @@ const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-US', options);
 };
+
 const clear = async () => {
     lastName.value = '';
     firstName.value = '';
@@ -79,6 +85,7 @@ const clear = async () => {
     hospital.value = '';
     searchPatient();
 };
+
 const validateRequiredFields = () => {
     let error = false;
     let firstErrorField = null; // Reference to the first unfilled required field
@@ -131,6 +138,7 @@ const validateRequiredFields = () => {
     }
     return true;
 };
+
 const createAccount = async () => {
     const validationSuccess = await validateRequiredFields();
     if (!validationSuccess) {
@@ -138,8 +146,10 @@ const createAccount = async () => {
     }
     const response = await api.post(`/createAccount`, newUser.value, { headers: header });
 };
+
 const closeModal = async () => {
     addNew.value = false;
+    deleteModal.value = false;
     newUser.value.username = '';
     newUser.value.hciID = '';
     newUser.value.lastName = '';
@@ -149,11 +159,13 @@ const closeModal = async () => {
     newUser.value.contactNo = '';
     newUser.value.emailAddress = '';
 };
+
 const setLoadingState = async (header, text) => {
     saving.value = true;
     savingHeader.value = header;
     savingText.value = text;
 };
+
 const hideLoadingModal = (header, text) => {
     savingHeader.value = header;
     savingText.value = text;
@@ -164,12 +176,35 @@ const hideLoadingModal = (header, text) => {
         searchPatient();
     }, 1000);
 };
+
 const handleCreateAccount = async () => {
     await setLoadingState('Signing up', 'Creating new account. Please Wait.');
     await createAccount();
     await hideLoadingModal('Account Created Successfully!🥳', 'You have successfully created the account. An email will be sent to the indicated user regarding the account creation.');
     await closeModal();
 };
+
+const handleDeleteClick = async (ID) => {
+    idToDelete.value = ID;
+    deleteModal.value = true;
+};
+
+const removeUser = async () => {
+    const validationSuccess = await validateRequiredFields();
+    if (!validationSuccess) {
+        return;
+    }
+    const response = await api.post(`/removeUser`, { userID: idToDelete.value }, { headers: header });
+    searchPatient();
+};
+
+const handleRemoveUser = async () => {
+    await setLoadingState('Updating Users List', 'Removing User. Please Wait.');
+    await removeUser();
+    await hideLoadingModal('Users List Updated!🥳', 'You have successfully removed User. ');
+    await closeModal();
+};
+
 onMounted(async () => {
     console.log(newUser.value);
     await fetchReferringHCIs();
@@ -202,7 +237,7 @@ onMounted(async () => {
                     <Column header="Action" :style="{ width: '200px' }">
                         <template #body="slotProps">
                             <div>
-                                <Button @click="deleteItem(slotProps.data.userID)" icon="pi pi-trash" severity="danger" size="small" class="mx-1"></Button>
+                                <Button @click="handleDeleteClick(slotProps.data.id)" icon="pi pi-trash" severity="danger" size="small" class="mx-1"></Button>
                             </div>
                         </template>
                     </Column>
@@ -238,6 +273,16 @@ onMounted(async () => {
                 <p>{{ savingText }}</p>
             </div>
             <ProgressBar v-if="savingProgress" mode="indeterminate" style="height: 6px"></ProgressBar>
+        </Dialog>
+
+        <Dialog closable v-model:visible="deleteModal" modal header="Delete User" :closable="false" :style="{ width: '26rem' }">
+            <div class="align-items-center gap-3 mb-3">
+                <p>Are you sure you want to delete User?</p>
+            </div>
+            <div class="flex justify-content-end gap-2">
+                <Button @click="handleRemoveUser" type="button" label="Submit" severity="primary"></Button>
+                <Button @click="cancelDefer" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
+            </div>
         </Dialog>
     </div>
 </template>
