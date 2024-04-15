@@ -3,12 +3,14 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import api from '../../api';
 const router = useRouter();
 const patients = ref([]);
 const loading = ref(false);
 const lastName = ref('');
 const firstName = ref('');
 const middleName = ref('');
+const erCensus = ref([]);
 const noMatch = ref(false);
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 
@@ -16,7 +18,10 @@ const redirectToAddPatient = (patientId) => {
     const route = patientId ? `/ours/addPatientForm?id=${patientId}` : `/ours/addPatientForm?id=new`;
     router.push(route);
 };
-
+const fetchERCensus = async () => {
+    const response = await api.get(`/fetchERCount`, { headers: header });
+    erCensus.value = response.data[0];
+};
 const searchPatient = async () => {
     loading.value = true;
     await axios({
@@ -44,10 +49,17 @@ const clear = async () => {
     middleName.value = '';
 };
 
-onMounted(() => {});
+onMounted(async () => {
+    await fetchERCensus();
+});
 </script>
 
 <template>
+    <Message severity="warn" :closable="false"
+        >NOTE: There are currently <span class="font-bold font-italic">{{ erCensus.ongoing_ED_consultation_total }} On-going ED Consultations</span> and
+        <span class="font-bold font-italic">{{ erCensus.admitted_still_at_ED_total }} Admitted patients still in the ER</span> for a total of
+        <span class="font-bold font-italic">{{ erCensus.total_patients_total }} patients in the ER</span>
+    </Message>
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
             <div class="card">

@@ -48,6 +48,11 @@ watch(hciID, (newVal) => {
                         label: 'Manage Users',
                         icon: 'pi pi-user-edit',
                         to: '/ours/manageUsers'
+                    },
+                    {
+                        label: 'Manage HCIs',
+                        icon: 'pi pi-building',
+                        to: '/ours/manageHCI'
                     }
                 ]
             }

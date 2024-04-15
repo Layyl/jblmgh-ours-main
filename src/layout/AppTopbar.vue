@@ -30,7 +30,11 @@ const showNotifs = (event) => {
     notifs.value.toggle(event);
     newNotif.value = false;
 };
-
+const viewNotification = (rid, rhid) => {
+    console.log('ReferralID: ', rid);
+    console.log('ReferralHisID: ', rhid);
+    router.push(`/ours/viewPatientForm?rid=${rid}&rhid=${rhid}`);
+};
 const onChangeTheme = (theme, mode) => {
     isDark.value = !isDark.value;
     const elementId = 'theme-css';
@@ -48,23 +52,30 @@ const onChangeTheme = (theme, mode) => {
 };
 
 const showNotification = (e) => {
+    console.log(e);
     if (e.sent_to == hospID.value) {
         if (e.notificationType == '1') {
-            toast.add({ severity: 'success', summary: 'Accepted', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'Accepted', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         } else if (e.notificationType == '2') {
-            toast.add({ severity: 'warn', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         } else if (e.notificationType == '3') {
-            toast.add({ severity: 'warn', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         } else if (e.notificationType == '4') {
-            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         } else if (e.notificationType == '5') {
-            toast.add({ severity: 'error', summary: 'Referral Deferred', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'Referral Deferred', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         } else if (e.notificationType == '6') {
-            toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 5000 });
+            toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         } else if (e.notificationType == '7') {
             if (e.referralID != refID.value) {
-                toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 5000 });
+                toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
             }
+        } else if (e.notificationType == '8') {
+            toast.add({ severity: 'info', summary: 'Referral Cancelled', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
+        } else if (e.notificationType == '9') {
+            toast.add({ severity: 'info', summary: 'Referred to JBLMGH', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
+        } else if (e.notificationType == '10') {
+            toast.add({ severity: 'info', summary: 'Vital Signs Updated', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
         }
         fetchNotifications();
         newNotif.value = true;
@@ -80,7 +91,6 @@ window.Echo = new Echo({
     disableStats: true,
     forceTLS: false
 });
-
 window.Echo.channel('notification').listen('NewNotification', showNotification);
 window.Echo.connector.pusher.connection.bind('connected', function () {});
 
@@ -107,15 +117,12 @@ onMounted(() => {
     bindOutsideClickListener();
     checkTokenAndClearSession();
 });
-
 onBeforeUnmount(() => {
     unbindOutsideClickListener();
 });
-
 const logoUrl = computed(() => {
     return `../../src/assets/img/jbllogo.png`;
 });
-
 const onTopBarMenuButton = () => {
     topbarMenuActive.value = !topbarMenuActive.value;
 };
@@ -128,7 +135,6 @@ const topbarMenuClasses = computed(() => {
         'layout-topbar-menu-mobile-active': topbarMenuActive.value
     };
 });
-
 const bindOutsideClickListener = () => {
     if (!outsideClickListener.value) {
         outsideClickListener.value = (event) => {
@@ -195,7 +201,7 @@ const isOutsideClicked = (event) => {
                         </div>
                         <hr />
                         <div class="notification-list custom-scrollbar">
-                            <div class="notification-item" v-for="n in notificationsList" :key="n.id">
+                            <div @click="viewNotification(n.referralID, n.referralHistoryID)" class="notification-item cursor-pointer" v-for="n in notificationsList" :key="n.id">
                                 <div class="notification-content">
                                     <p>
                                         {{ n.notification }}

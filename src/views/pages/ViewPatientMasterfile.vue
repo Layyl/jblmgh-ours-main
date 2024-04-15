@@ -652,9 +652,7 @@ onMounted(async () => {
     await fetchBarangay();
     await fetchMessages();
     Cookies.set('referralID', referralData.value.referralID);
-    if (referralData.value.referralStatus == 1 && referralData.value.referringHospital != hciID.value) {
-        await postSetToOngoing();
-    }
+
     userId.value = Cookies.get('uID');
     refHisID.value = referralData.value.referralID;
 

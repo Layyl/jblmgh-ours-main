@@ -119,9 +119,9 @@ onMounted(async () => {
     hciID.value = Cookies.get('hciID');
     tempPasswordChanged.value = Cookies.get('tempPass');
     userID.value = Cookies.get('pID');
+    fetchERCensus();
     await fetchDashboardCensus();
     await getRecentInbound();
-    await fetchERCensus();
     fetching.value = false;
 });
 </script>

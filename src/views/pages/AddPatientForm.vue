@@ -80,6 +80,7 @@ const fetchCivilStatus = async () => {
     const response = await api.get(`/fetchCivilStatus`, { headers: header });
     civilStatus.value = response.data;
 };
+
 const fetchNationality = async () => {
     const response = await api.get(`/fetchNationality`, { headers: header });
     nationality.value = response.data;

@@ -48,6 +48,7 @@ const refer = ref(false);
 const referOPCEN = ref(false);
 const chatBox = ref(false);
 const editVitals = ref(false);
+const editVitalsModal = ref(false);
 const refHisID = ref('');
 const userId = ref('');
 const messages = ref([]);
@@ -308,6 +309,7 @@ const calculateGCS = () => {
     referralData.value.gcs = parseInt(referralData.value.e) + parseInt(referralData.value.v) + parseInt(referralData.value.m);
 };
 const calculateBMI = () => {
+    console.log('hello');
     calculateHeight();
     var heightInMeters = parseInt(referralData.value.height) / 100;
     var weight = parseInt(referralData.value.weight);
@@ -332,6 +334,7 @@ const calculateHeight = () => {
 
     heightCm.value = (parseFloat(heightFt.value) * 12 + parseFloat(heightIn.value)) * 2.54;
     referralData.value.height = heightCm.value;
+    console.log(referralData.value.height);
 };
 const viewImage = (url) => {
     Swal.fire({
@@ -415,6 +418,23 @@ const postAccept = async () => {
     }
     const response = await api.post(`/acceptPatient`, referralData.value, { headers: header });
 };
+const handleAccept = async () => {
+    await setLoadingState('Accepting Patient.', 'Accepting patient. Please wait');
+    await postAccept();
+    hideLoadingModal('Patient Accepted!🎉', 'Patient has been successfully accepted.');
+};
+const postEditVitals = async () => {
+    const validationSuccess = await validateRequiredFields();
+    if (!validationSuccess) {
+        return;
+    }
+    const response = await api.post(`/updateVitalSigns`, referralData.value, { headers: header });
+};
+const handleEditVitals = async () => {
+    await setLoadingState('Editing Vitals.', 'Updating vital signs. Please wait');
+    await postEditVitals();
+    hideLoadingModal('Vital signs updated!🎉', 'Vital signs of patient has been successfully updated.');
+};
 const postSetToOngoing = async () => {
     const response = await api.post(`/setToOngoing`, referralData.value, { headers: header });
 };
@@ -437,15 +457,13 @@ const handleReturnClick = async () => {
     await returnToJBL();
     hideLoadingModal('Successfully Returned to OPCEN!🎉', 'Referral returned to JBLMGH successfully.');
 };
-const handleAccept = async () => {
-    await setLoadingState('Accepting Patient.', 'Accepting patient. Please wait');
-    await postAccept();
-    hideLoadingModal('Patient Accepted!🎉', 'Patient has been successfully accepted.');
-};
 const handleDeferClick = async () => {
     await setLoadingState('Deferring Patient.', 'Deferring patient. Please wait');
     await postDefer();
     hideLoadingModal('Successfully Deferred!🎉', 'Referral is successfully deferred.');
+};
+const cancelEditVitalsModal = () => {
+    editVitalsModal.value = false;
 };
 const cancelDefer = () => {
     referralData.value.deferRemarks = '';
@@ -598,6 +616,7 @@ const sendMessage = async () => {
             {
                 message: newMessage.value,
                 referralID: referralData.value.referralID,
+                referralHistoryID: referralData.value.referralHistoryID,
                 referringHospital: referralData.value.referringHospital,
                 receivingHospital: referralData.value.receivingHospital,
                 fullName: referralData.value.lastName + ', ' + referralData.value.firstName + ' ' + referralData.value.middleName,
@@ -640,6 +659,7 @@ onMounted(async () => {
     hciID.value = Cookies.get('hciID');
 
     console.log(hciID.value);
+
     await fetchCivilStatus();
     await fetchReferringHCIs();
     await fetchReferralReasons();
@@ -1007,8 +1027,8 @@ onMounted(async () => {
                         <label v-else for="Height">Height <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <div v-else class="flex flex-row">
-                            <InputNumber :useGrouping="false" required @change="calculateBMI" :readonly="!editVitals" v-model="heightFt" id="ft" type="text" placeholder="Feet" />
-                            <InputNumber :useGrouping="false" required @change="calculateBMI" :readonly="!editVitals" v-model="heightIn" id="in" type="text" placeholder="Inches" />
+                            <InputText required @change="calculateBMI" v-model="heightFt" id="ft" type="text" placeholder="Feet" />
+                            <InputText required @change="calculateBMI" v-model="heightIn" id="in" type="text" placeholder="Inches" />
                         </div>
                     </div>
                     <div class="field col-12 md:col-6">
@@ -1100,7 +1120,7 @@ onMounted(async () => {
                     </div>
                 </div>
                 <div v-if="editVitals" class="col-12 flex flex-row gap-2 align-content-center justify-content-end">
-                    <Button type="button" label="Save" @click="saveData" icon="pi pi-save" :loading="loading" />
+                    <Button type="button" label="Save" @click="editVitalsModal = true" icon="pi pi-save" :loading="loading" />
                     <Button severity="danger" type="button" label="Cancel" @click="editVitals = false" icon="pi pi-times" />
                 </div>
             </div>
@@ -1142,6 +1162,17 @@ onMounted(async () => {
             <div class="flex justify-content-end gap-2">
                 <Button @click="handleDeferClick" type="button" label="Submit" severity="primary"></Button>
                 <Button @click="cancelDefer" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
+            </div>
+        </Dialog>
+
+        <!-- EDIT VITALS -->
+        <Dialog closable v-model:visible="editVitalsModal" modal header="Defer Patient" :closable="false" :style="{ width: '26rem' }">
+            <div class="align-items-center gap-3 mb-3">
+                <p>Are you sure you want to edit patient's vital signs?</p>
+            </div>
+            <div class="flex justify-content-end gap-2">
+                <Button @click="handleEditVitals" type="button" label="Update" severity="primary"></Button>
+                <Button @click="cancelEditVitalsModal" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
             </div>
         </Dialog>
 

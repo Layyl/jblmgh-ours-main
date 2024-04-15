@@ -114,6 +114,11 @@ const router = createRouter({
                     path: '/ours/manageUsers',
                     name: 'manageUsers',
                     component: () => import('@/views/pages/ManageUsers.vue')
+                },
+                {
+                    path: '/ours/manageHCI',
+                    name: 'manageHCI',
+                    component: () => import('@/views/pages/ManageHCI.vue')
                 }
             ]
         },
