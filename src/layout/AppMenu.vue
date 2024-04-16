@@ -25,7 +25,6 @@ const model = ref([
 const logout = async () => {
     const header = { Authorization: `Bearer ${Cookies.get('token')}` };
     const response = await axios.post('http://192.163.8.195:90/api/logout', {}, { headers: header });
-    console.log('logout');
     Cookies.remove('token');
     Cookies.remove('hciID');
     Cookies.remove('uname');

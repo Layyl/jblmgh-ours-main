@@ -105,7 +105,6 @@ const jbl = ref([
                 command: () => {
                     referralData.value.deferReason = 4;
                     defer.value = true;
-                    console.log(referralData.value);
                 }
             },
             {
@@ -113,7 +112,6 @@ const jbl = ref([
                 command: () => {
                     referralData.value.deferReason = 5;
                     defer.value = true;
-                    console.log(referralData.value);
                 }
             },
             {
@@ -568,9 +566,7 @@ const getStatus = (referralStatus) => {
     }
 };
 const handleNewChatMessage = (e) => {
-    console.log(e);
     if (e.referralID == refHisID.value) {
-        console.log('message');
         messages.value.push({
             message: e.message,
             user_id: e.user_id,
@@ -578,7 +574,6 @@ const handleNewChatMessage = (e) => {
             sent_date: e.sent_date,
             sent_time: e.sent_time
         });
-        console.log(messages.value);
         setTimeout(() => {
             scrollToBottom();
         }, 50);
@@ -612,9 +607,6 @@ const sendMessage = async () => {
         )
         .then((response) => {
             newMessage.value = '';
-        })
-        .catch((error) => {
-            console.log(error);
         });
 };
 window.Pusher = Pusher;
@@ -630,16 +622,13 @@ window.Echo = new Echo({
 onMounted(async () => {
     window.Echo.channel('chat').listen('NewChatMessage', handleNewChatMessage);
 
-    window.Echo.connector.pusher.connection.bind('connected', function () {
-        console.log('Pusher Connected');
-    });
+    window.Echo.connector.pusher.connection.bind('connected', function () {});
 
     fetching.value = true;
     referralID.value = route.query.rid;
     referralHistoryID.value = route.query.rhid;
     hciID.value = Cookies.get('hciID');
 
-    console.log(hciID.value);
     await fetchCivilStatus();
     await fetchReferringHCIs();
     await fetchReferralReasons();

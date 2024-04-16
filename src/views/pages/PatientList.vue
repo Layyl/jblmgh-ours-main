@@ -4,10 +4,11 @@ import Cookies from 'js-cookie';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../api';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
 const router = useRouter();
 const inboundPatients = ref([]);
-const outboundPatients = ref([]);
 const hciID = ref('');
 const inboundLastName = ref('');
 const inboundFirstName = ref('');
@@ -148,9 +149,25 @@ const cancelReferral = async (referralID) => {
     fetchOutboundPatients();
 };
 
+const reload = async (e) => {
+    if (e.sent_to == hciID.value && e.notificationType != 7) {
+        await fetchInboundPatients();
+    }
+};
+
+window.Pusher = Pusher;
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    wsHost: window.location.hostname,
+    wsPort: 6001,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    disableStats: true,
+    forceTLS: false
+});
 onMounted(async () => {
+    window.Echo.channel('notification').listen('NewNotification', reload);
     hciID.value = Cookies.get('hciID');
-    console.log(hciID.value);
     await fetchInboundPatients();
 });
 </script>

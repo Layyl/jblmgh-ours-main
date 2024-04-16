@@ -60,8 +60,6 @@ const isOutsideClicked = (event) => {
     return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
 };
 const viewNotification = (rid, rhid) => {
-    console.log('ReferralID: ', rid);
-    console.log('ReferralHisID: ', rhid);
     router.push(`/ours/viewPatientForm?rid=${rid}&rhid=${rhid}`);
 };
 </script>
@@ -73,7 +71,7 @@ const viewNotification = (rid, rhid) => {
                 <div class="flex flex-column align-items-start" style="flex: 1">
                     <div class="font-bold text-lg my-1 text-900">{{ slotProps.message.summary }}</div>
                     <div class="font-medium text-lg my-3 text-900">{{ slotProps.message.detail }}</div>
-                    <Button severity="info" class="w-full" text label="View" @click="viewNotification(slotProps.message.rid, slotProps.message.rhid)" />
+                    <Button v-if="slotProps.message.notificationType != 8" severity="info" class="w-full" text label="View" @click="viewNotification(slotProps.message.rid, slotProps.message.rhid)" />
                 </div>
             </template>
         </Toast>

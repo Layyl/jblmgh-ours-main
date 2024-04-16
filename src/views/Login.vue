@@ -278,8 +278,6 @@ const login = async () => {
             username: username.value,
             password: password.value
         });
-
-        console.log(response.data);
         if (response.data.status) {
             Cookies.set('token', response.data.token);
             Cookies.set('hciID', response.data.user.hciID);

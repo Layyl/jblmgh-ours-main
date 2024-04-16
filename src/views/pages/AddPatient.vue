@@ -33,9 +33,7 @@ const searchPatient = async () => {
         patients.value = res.data;
         if (patients.value.patients.length == 0) {
             noMatch.value = true;
-            console.log(noMatch.value);
         }
-        console.log(patients.value);
         loading.value = false;
     });
 };

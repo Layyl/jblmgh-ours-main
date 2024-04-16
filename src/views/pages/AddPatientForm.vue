@@ -159,7 +159,6 @@ const calculateBMI = () => {
     } else {
         patientData.value.bmi = '';
     }
-    console.log(patientData.value.bmi);
 };
 
 const calculateHeight = () => {
@@ -231,9 +230,7 @@ const saveData = async () => {
     saving.value = true;
     await collateFileNames();
     const response = await api.post(`/createNewReferral`, patientData.value, { headers: header }).then(async (res) => {
-        console.log(res.data);
         savedReferralID.value = res.data.referralID;
-        console.log('savedReferralID', savedReferralID.value);
         await transferFiles();
         saving.value = false;
         success.value = true;

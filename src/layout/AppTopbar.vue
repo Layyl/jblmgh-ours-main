@@ -31,8 +31,6 @@ const showNotifs = (event) => {
     newNotif.value = false;
 };
 const viewNotification = (rid, rhid) => {
-    console.log('ReferralID: ', rid);
-    console.log('ReferralHisID: ', rhid);
     router.push(`/ours/viewPatientForm?rid=${rid}&rhid=${rhid}`);
 };
 const onChangeTheme = (theme, mode) => {
@@ -51,36 +49,37 @@ const onChangeTheme = (theme, mode) => {
     linkElement.parentNode.insertBefore(cloneLinkElement, linkElement.nextSibling);
 };
 
+const notificationTypes = {
+    1: 'Accepted',
+    2: 'Referred to OPCEN',
+    3: 'Referred to other Healthcare Institution',
+    4: 'New Referral',
+    5: 'Referral Deferred',
+    6: 'Under Assessment',
+    7: 'New Message',
+    8: 'Referral Cancelled',
+    9: 'Referred to JBLMGH',
+    10: 'Vital Signs Updated',
+    11: 'Patient Expired'
+};
+
 const showNotification = (e) => {
-    console.log(e);
-    if (e.sent_to == hospID.value) {
-        if (e.notificationType == '1') {
-            toast.add({ severity: 'info', summary: 'Accepted', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '2') {
-            toast.add({ severity: 'info', summary: 'Referred to OPCEN', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '3') {
-            toast.add({ severity: 'info', summary: 'Referred to other Healthcare Institution', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '4') {
-            toast.add({ severity: 'info', summary: 'New Referral', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '5') {
-            toast.add({ severity: 'info', summary: 'Referral Deferred', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '6') {
-            toast.add({ severity: 'info', summary: 'Under Assessment', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '7') {
-            if (e.referralID != refID.value) {
-                toast.add({ severity: 'info', summary: 'New Message', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-            }
-        } else if (e.notificationType == '8') {
-            toast.add({ severity: 'info', summary: 'Referral Cancelled', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '9') {
-            toast.add({ severity: 'info', summary: 'Referred to JBLMGH', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
-        } else if (e.notificationType == '10') {
-            toast.add({ severity: 'info', summary: 'Vital Signs Updated', detail: `${e.notification}`, life: 3000, rid: `${e.referralID}`, rhid: `${e.referralHistoryID}` });
+    const { sent_to, notificationType, referralID, ri, referralHistoryID } = e;
+    if (sent_to == hospID.value && notificationTypes[notificationType]) {
+        const summary = notificationTypes[notificationType];
+        const detail = e.notification;
+
+        if (notificationType != 7) {
+            toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType });
+        } else if (notificationType == 7 && ri != refID.value) {
+            toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType });
         }
+
         fetchNotifications();
         newNotif.value = true;
     }
 };
+
 window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
@@ -101,7 +100,6 @@ const fetchNotifications = async () => {
 
 const setToExpired = async () => {
     const response = await api.post(`/setToExpired`, '', { headers: header });
-    console.log('set to expired');
 };
 
 onMounted(() => {

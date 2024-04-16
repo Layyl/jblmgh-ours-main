@@ -172,7 +172,6 @@ const handleAddHCI = async () => {
 };
 
 onMounted(async () => {
-    console.log(newHCI.value);
     await fetchReferringHCIs();
 });
 </script>

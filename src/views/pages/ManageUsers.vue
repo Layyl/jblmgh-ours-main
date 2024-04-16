@@ -47,7 +47,6 @@ const searchPatient = async () => {
         data: {}
     }).then((res) => {
         users.value = res.data;
-        console.log(users.value);
         loading.value = false;
     });
 };
@@ -60,7 +59,6 @@ const fetchReferringHCIs = async () => {
 const fetchSelectedReferringHCI = async () => {
     const response = await api.get(`/fetchHealthCareInstitution?HealthFacilityCodeShort=${newUser.value.hciID}`, { headers: header });
     selectedHCI.value = response.data[0];
-    console.log(selectedHCI.value);
 
     const facilityName = selectedHCI.value.FacilityName;
     const facilityCodeShort = selectedHCI.value.HealthFacilityCodeShort;
@@ -206,7 +204,6 @@ const handleRemoveUser = async () => {
 };
 
 onMounted(async () => {
-    console.log(newUser.value);
     await fetchReferringHCIs();
     await searchPatient();
 });

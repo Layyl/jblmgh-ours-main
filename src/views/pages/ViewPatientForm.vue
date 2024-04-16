@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Swal from 'sweetalert2';
 import api from '../../api';
+
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
@@ -32,6 +33,7 @@ const heightFt = ref(0);
 const heightIn = ref(0);
 const heightCm = ref(0);
 const disclaimer = ref(0);
+const newMessageAlert = ref(false);
 const fetching = ref(false);
 const loading = ref(false);
 const loadingHeader = ref('');
@@ -106,7 +108,6 @@ const jbl = ref([
                 command: () => {
                     referralData.value.deferReason = 4;
                     defer.value = true;
-                    console.log(referralData.value);
                 }
             },
             {
@@ -114,7 +115,6 @@ const jbl = ref([
                 command: () => {
                     referralData.value.deferReason = 5;
                     defer.value = true;
-                    console.log(referralData.value);
                 }
             },
             {
@@ -309,7 +309,6 @@ const calculateGCS = () => {
     referralData.value.gcs = parseInt(referralData.value.e) + parseInt(referralData.value.v) + parseInt(referralData.value.m);
 };
 const calculateBMI = () => {
-    console.log('hello');
     calculateHeight();
     var heightInMeters = parseInt(referralData.value.height) / 100;
     var weight = parseInt(referralData.value.weight);
@@ -334,7 +333,6 @@ const calculateHeight = () => {
 
     heightCm.value = (parseFloat(heightFt.value) * 12 + parseFloat(heightIn.value)) * 2.54;
     referralData.value.height = heightCm.value;
-    console.log(referralData.value.height);
 };
 const viewImage = (url) => {
     Swal.fire({
@@ -506,6 +504,7 @@ const handleTransferClick = async () => {
 };
 const handleChatboxClick = async () => {
     chatBox.value = true;
+    newMessageAlert.value = false;
     setTimeout(() => {
         scrollToBottom();
     }, 100);
@@ -572,7 +571,7 @@ const getStatus = (referralStatus) => {
         case 4:
             return 'Given Management';
         case 5:
-            return 'Px Refused Transfer)';
+            return 'Px Refused Transfer';
         case 6:
             return 'Transferred to OPCEN';
         case 7:
@@ -586,9 +585,7 @@ const getStatus = (referralStatus) => {
     }
 };
 const handleNewChatMessage = (e) => {
-    console.log(e);
     if (e.referralID == refHisID.value) {
-        console.log('message');
         messages.value.push({
             message: e.message,
             user_id: e.user_id,
@@ -596,9 +593,10 @@ const handleNewChatMessage = (e) => {
             sent_date: e.sent_date,
             sent_time: e.sent_time
         });
-        console.log(messages.value);
         setTimeout(() => {
-            scrollToBottom();
+            if (chatBox.value == true) {
+                scrollToBottom();
+            }
         }, 50);
     }
 };
@@ -608,6 +606,18 @@ const scrollToBottom = () => {
         top: div.scrollHeight,
         behavior: 'smooth'
     });
+};
+
+const reload = async (e) => {
+    if (e.ri == referralData.value.referralID) {
+        await fetchReferralData();
+    }
+
+    if (e.notificationType == 7) {
+        if (chatBox.value == false) {
+            newMessageAlert.value = true;
+        }
+    }
 };
 const sendMessage = async () => {
     const response = await api
@@ -631,9 +641,6 @@ const sendMessage = async () => {
         )
         .then((response) => {
             newMessage.value = '';
-        })
-        .catch((error) => {
-            console.log(error);
         });
 };
 window.Pusher = Pusher;
@@ -647,18 +654,18 @@ window.Echo = new Echo({
     forceTLS: false
 });
 onMounted(async () => {
+    // Subscribe to 'chat' channel
     window.Echo.channel('chat').listen('NewChatMessage', handleNewChatMessage);
 
-    window.Echo.connector.pusher.connection.bind('connected', function () {
-        console.log('Pusher Connected');
-    });
+    // Subscribe to 'notification' channel
+    window.Echo.channel('notification').listen('NewNotification', reload);
+
+    window.Echo.connector.pusher.connection.bind('connected', function () {});
 
     fetching.value = true;
     referralID.value = route.query.rid;
     referralHistoryID.value = route.query.rhid;
     hciID.value = Cookies.get('hciID');
-
-    console.log(hciID.value);
 
     await fetchCivilStatus();
     await fetchReferringHCIs();
@@ -683,21 +690,26 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Button icon="pi pi-send" class="p-button-rounded p-button-primary fixed z-1 bottom-0 right-0 m-4" @click="handleChatboxClick"> </Button>
+    <div class="fixed z-5" style="bottom: 3.5rem; right: 1.3rem">
+        <div class="flex">
+            <Badge v-if="newMessageAlert" severity="danger" class="p-overlay-badge ml-2 mt-2 z-5" style="width: 10px; height: 10px"></Badge>
+            <Button icon="pi pi-send" class="p-button-rounded p-button-primary fixed z-1 bottom-0 right-0 m-4" @click="handleChatboxClick" />
+        </div>
+    </div>
 
-    <div class="mb-5" v-if="hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
+    <div class="mb-5" v-if="referralData.status == 1 && hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
         <Menubar :model="jbl" />
     </div>
-    <div class="mb-5" v-if="hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
+    <div class="mb-5" v-if="referralData.status == 1 && hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
         <Menubar :model="opcenMenu" />
     </div>
-    <div class="mb-5" v-if="hciID == referralData.referringHospital">
+    <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.referringHospital">
         <Menubar :model="printOnly" />
     </div>
-    <div class="mb-5" v-if="hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
+    <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
         <Menubar :model="other" />
     </div>
-    <div class="mb-5" v-if="(hciID == referralData.receivingHospital && referralData.referralStatus == 4) || referralData.referralStatus == 5">
+    <div class="mb-5" v-if="referralData.status == 1 && referralData && hciID == referralData.receivingHospital && (referralData.referralStatus == 4 || referralData.referralStatus == 5)">
         <Menubar :model="reopen" />
     </div>
 
@@ -769,6 +781,7 @@ onMounted(async () => {
                                         <template #content>
                                             <p>
                                                 Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
+                                                <span v-if="referralData.status == 0" class="text-gray-600 font-bold"> - Cancelled Referral</span>
                                             </p>
                                         </template>
                                     </Card>

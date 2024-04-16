@@ -14,13 +14,11 @@ const invalidEmail = ref(false);
 const sent = ref(false);
 
 const checkEmailFormat = async (emailAddress) => {
-    console.log(emailAddress);
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailPattern.test(emailAddress)) {
         const response = await api.post(`/sendResetLinkEmail?email=${emailAddress}`);
         sent.value = true;
     } else {
-        console.log('invalid');
         invalidEmail.value = true;
     }
 };
@@ -37,7 +35,6 @@ const sendEmail = async () => {
 const closeMessages = () => {
     blankEmail.value = false;
     invalidEmail.value = false;
-    console.log(blankEmail.value, invalidEmail.value);
 };
 
 onMounted(async () => {});

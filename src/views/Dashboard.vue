@@ -4,7 +4,8 @@ import Cookies from 'js-cookie';
 import { useLayout } from '@/layout/composables/layout';
 import api from '../api';
 import { useToast } from 'primevue/usetoast';
-
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 const toast = useToast();
 const { isDarkTheme } = useLayout();
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
@@ -113,8 +114,24 @@ const updatePassword = async () => {
         passwordUpdateSuccess();
     }
 };
-
+const reload = async (e) => {
+    if (e.sent_to == hciID.value && e.notificationType != 7) {
+        await getRecentInbound();
+        await fetchDashboardCensus();
+    }
+};
+window.Pusher = Pusher;
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    wsHost: window.location.hostname,
+    wsPort: 6001,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    disableStats: true,
+    forceTLS: false
+});
 onMounted(async () => {
+    window.Echo.channel('notification').listen('NewNotification', reload);
     fetching.value = true;
     hciID.value = Cookies.get('hciID');
     tempPasswordChanged.value = Cookies.get('tempPass');

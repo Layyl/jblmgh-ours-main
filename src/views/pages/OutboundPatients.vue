@@ -4,7 +4,8 @@ import Cookies from 'js-cookie';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../api';
-
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 const router = useRouter();
 const inboundPatients = ref([]);
 const outboundPatients = ref([]);
@@ -15,11 +16,15 @@ const outboundMiddleName = ref('');
 const loading = ref(false);
 const loadingHeader = ref('');
 const loadingText = ref('');
+const loadingProgress = ref(true);
 const forCancel = ref('');
+const forExpired = ref('');
 const cancelModal = ref(false);
+const expiredModal = ref(false);
 const tableSkeleton = ref(new Array(5));
 const expandedRows = ref([]);
 const fetching = ref(false);
+
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 
 const getStatus = (referralStatus) => {
@@ -151,11 +156,6 @@ const clear = async (tab) => {
     }
 };
 
-const cancelReferral = async (referralID) => {
-    await api.post(`/cancelReferral`, { referralID: referralID }, { headers: header });
-    fetchOutboundPatients();
-};
-
 const setLoadingState = async (header, text) => {
     loading.value = true;
     loadingHeader.value = header;
@@ -172,6 +172,11 @@ const hideLoadingModal = (header, text) => {
     }, 1000);
 };
 
+const cancelReferral = async (forCancel) => {
+    await api.post(`/cancelReferral`, forCancel, { headers: header });
+    fetchOutboundPatients();
+};
+
 const handleCancelButton = (referralID) => {
     forCancel.value = referralID;
     cancelModal.value = true;
@@ -183,13 +188,46 @@ const handleCancelClick = async () => {
     hideLoadingModal('Successfully Cancelled!🎉', 'Referral is successfully cancelled.');
 };
 
-const cancel = () => {
-    cancelModal.value = false;
+const expiredPatient = async (referralHistory) => {
+    await api.post(`/expiredPatient`, referralHistory, { headers: header });
+    fetchOutboundPatients();
 };
 
+const handleExpiredButton = (referralHistory) => {
+    forExpired.value = referralHistory;
+    expiredModal.value = true;
+};
+
+const handleExpiredClick = async () => {
+    await setLoadingState('Cancelling...', 'Setting patient status to expired. Please wait');
+    expiredPatient(forExpired.value);
+    hideLoadingModal('Success', 'Referral status set.');
+};
+
+const cancel = () => {
+    cancelModal.value = false;
+    expiredModal.value = false;
+};
+
+const reload = async (e) => {
+    if (e.sent_to == hciID.value && e.notificationType != 7) {
+        await fetchOutboundPatients();
+    }
+};
+
+window.Pusher = Pusher;
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    wsHost: window.location.hostname,
+    wsPort: 6001,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    disableStats: true,
+    forceTLS: false
+});
 onMounted(async () => {
+    window.Echo.channel('notification').listen('NewNotification', reload);
     hciID.value = Cookies.get('hciID');
-    console.log(hciID.value);
     await fetchOutboundPatients();
 });
 </script>
@@ -252,13 +290,12 @@ onMounted(async () => {
                     </Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
-                            <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="handleCancelButton(slotProps.data.referralID)" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
+                            <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="handleCancelButton(slotProps.data.referralHistory[0])" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
                         </template>
                     </Column>
                     <template #expansion="slotProps">
                         <div class="pt-5">
                             <h5>Referral History</h5>
-
                             <Timeline
                                 :value="slotProps.data.referralHistory"
                                 class="customized-timeline"
@@ -296,7 +333,8 @@ onMounted(async () => {
                                                 <span v-else-if="slotProps.item.arrived == 1 && slotProps.item.referralStatus > 3" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">Defferred - Arrived</span>
                                                 <span v-else-if="slotProps.item.arrived == 1 && slotProps.item.referralStatus <= 3" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">Accepted - Arrived</span>
                                             </p>
-                                            <Button @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
+                                            <Button class="mr-2" @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
+                                            <Button class="mr-2" severity="danger" @click="handleExpiredButton(slotProps.item)" v-if="slotProps.item.referralStatus <= 3 && slotProps.item.arrived != 1" label="Expired Patient"></Button>
                                         </template>
                                     </Card>
                                 </template>
@@ -323,6 +361,17 @@ onMounted(async () => {
         </div>
         <div class="flex justify-content-end gap-2">
             <Button @click="handleCancelClick" type="button" label="Submit" severity="primary"></Button>
+            <Button @click="cancel" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
+        </div>
+    </Dialog>
+
+    <!-- EXPIRED PATIENT-->
+    <Dialog closable v-model:visible="expiredModal" modal header="Defer Patient" :closable="false" :style="{ width: '26rem' }">
+        <div class="align-items-center gap-3 mb-3">
+            <p>Are you sure you want to set patient to expired?</p>
+        </div>
+        <div class="flex justify-content-end gap-2">
+            <Button @click="handleExpiredClick" type="button" label="Submit" severity="primary"></Button>
             <Button @click="cancel" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
         </div>
     </Dialog>

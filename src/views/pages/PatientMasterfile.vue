@@ -142,7 +142,6 @@ const cancelReferral = async (referralID) => {
 
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
-    console.log(hciID.value);
     await fetchMasterfile();
 });
 </script>

@@ -36,8 +36,6 @@ const updatePassword = async () => {
         weakPass.value = true;
     } else {
         const response = await api.post(`/setPassword`, { token: token.value, email: encryptedEmail.value, password: password.value, password_confirmation: password_confirmation.value });
-        console.log(response);
-        console.log('yey');
         router.push(`/success`);
     }
 };
