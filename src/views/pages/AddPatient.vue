@@ -50,12 +50,14 @@ const clear = async () => {
 };
 
 onMounted(async () => {
+    loading.value = true;
     await fetchERCensus();
+    loading.value = false;
 });
 </script>
 
 <template>
-    <Message severity="warn" :closable="false"
+    <Message severity="warn" :closable="false" v-if="!loading"
         >NOTE: There are currently <span class="font-bold font-italic">{{ erCensus.ongoing_ED_consultation_total }} On-going ED Consultations</span> and
         <span class="font-bold font-italic">{{ erCensus.admitted_still_at_ED_total }} Admitted patients still in the ER</span> for a total of
         <span class="font-bold font-italic">{{ erCensus.total_patients_total }} patients in the ER</span>
@@ -65,9 +67,9 @@ onMounted(async () => {
             <div class="card">
                 <h3 class="block text-500 font-">Patient Registration</h3>
                 <div class="flex flex-column sm:flex-row gap-2 align-items-center">
-                    <InputText @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="lastName" placeholder="Last Name" type="text" v-model="lastName" />
-                    <InputText @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="firstName" placeholder="First Name" type="text" v-model="firstName" />
-                    <InputText @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="middleName" placeholder="Middle Name" type="text" v-model="middleName" />
+                    <InputText :disabled="loading" @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="lastName" placeholder="Last Name" type="text" v-model="lastName" />
+                    <InputText :disabled="loading" @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="firstName" placeholder="First Name" type="text" v-model="firstName" />
+                    <InputText :disabled="loading" @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="middleName" placeholder="Middle Name" type="text" v-model="middleName" />
                     <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
                         <Button @click="searchPatient" class="mx-2 w-full" :disabled="lastName == ''" type="button" icon="pi pi-search" label="Search" :loading="loading" />
                         <Button @click="clear" class="mx-2 w-full" severity="danger" type="button" icon="pi pi-times" label="Clear" :loading="loading" />

@@ -180,15 +180,6 @@ const isOutsideClicked = (event) => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <!-- <button v-if="!isDark" @click="onChangeTheme('lara-light-teal', 'light')" class="p-link layout-topbar-button">
-                <i class="pi pi-sun"></i>
-                <span>Change Theme</span>
-            </button>
-            <button v-else @click="onChangeTheme('lara-dark-teal', 'dark')" class="p-link layout-topbar-button">
-                <i class="pi pi-moon"></i>
-                <span>Change Theme</span>
-            </button> -->
-
             <i @click="showNotifs" class="pi pi-bell cursor-pointer text-2xl pl-3">
                 <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newNotif" :value="notificationCount" severity="danger" />
             </i>
