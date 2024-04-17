@@ -262,12 +262,12 @@ onMounted(async () => {
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
-                    <Column :style="{ width: '300px' }" field="referringHospitalDescription" header="Referring Hospital">
+                    <Column :style="{ width: '300px' }" field="referringHospitalDescription" header="Age">
                         <template #body>
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
-                    <Column :style="{ width: '100px' }" field="status" header="Referral Status">
+                    <Column :style="{ width: '300px' }" field="referringHospitalDescription" header="Gender">
                         <template #body>
                             <Skeleton></Skeleton>
                         </template>
@@ -283,6 +283,7 @@ onMounted(async () => {
                     <Column expander style="width: 5rem" />
                     <Column class="uppercase" field="formatted_created_at" header="Date Referred"></Column>
                     <Column class="uppercase" field="fullName" header="Name"></Column>
+                    <Column class="uppercase" field="Age" header="Age"></Column>
                     <Column class="uppercase" field="gender" header="Gender">
                         <template #body="slotProps">
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}

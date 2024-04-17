@@ -1188,7 +1188,16 @@ onMounted(async () => {
                 <Button @click="cancelEditVitalsModal" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
             </div>
         </Dialog>
-
+        <!-- TRANSFER TO OPCEN -->
+        <Dialog closable v-model:visible="opcen" modal header="Return to OPCEN" :closable="false" :style="{ width: '26rem' }">
+            <div class="align-items-center gap-3 mb-3">
+                <p>Are you sure you want to refer patient to OPCEN?</p>
+            </div>
+            <div class="flex justify-content-end gap-2">
+                <Button @click="handleOPCENClick" type="button" label="Yes" severity="primary"></Button>
+                <Button @click="opcen.value = false" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
+            </div>
+        </Dialog>
         <!-- RETURN TO OPCEN -->
         <Dialog closable v-model:visible="returnOPCEN" modal header="Return to OPCEN" :closable="false" :style="{ width: '26rem' }">
             <div class="align-items-center gap-3 mb-3">
@@ -1201,7 +1210,7 @@ onMounted(async () => {
         </Dialog>
 
         <!-- RETURN TO JBLMGH -->
-        <Dialog closable v-model:visible="returnJBL" modal header="Transfer to OPCEN" :closable="false" :style="{ width: '26rem' }">
+        <Dialog closable v-model:visible="returnJBL" modal header="Return To JBLMGH" :closable="false" :style="{ width: '26rem' }">
             <div class="align-items-center gap-3 mb-3">
                 <p>Are you sure you want to return referral to JBLMGH?</p>
             </div>

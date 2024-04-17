@@ -286,51 +286,6 @@ onMounted(async () => {
                 </DataTable>
             </div>
         </div>
-
-        <Dialog
-            v-model:visible="changepass"
-            :closeOnEscape="false"
-            modal
-            :pt="{
-                root: 'border-none',
-
-                mask: {
-                    style: 'backdrop-filter: blur(2px)'
-                }
-            }"
-        >
-            <template #container="{ closeCallback }">
-                <div class="flex flex-column px-5 py-5 gap-4" style="border-radius: 12px; background-color: white">
-                    <div class="inline-flex flex-column gap-2">
-                        <h4>Change password</h4>
-                        <span>Finalize your account setup by changing your password.</span>
-                    </div>
-                    <Message v-if="notMatch" severity="error">Passwords do not match.</Message>
-                    <Message v-if="weakPass" severity="error">Please enter a stronger password</Message>
-                    <div class="inline-flex flex-column gap-2">
-                        <label for="username" class="font-semibold">Password</label>
-                        <Password v-model="password" toggleMask :inputStyle="{ width: '100%' }">
-                            <template #footer>
-                                <Divider />
-                                <ul class="pl-2 ml-2 mt-0" style="line-height: 1.5">
-                                    <li>At least one lowercase</li>
-                                    <li>At least one uppercase</li>
-                                    <li>At least one numeric</li>
-                                    <li>Minimum 8 characters</li>
-                                </ul>
-                            </template>
-                        </Password>
-                    </div>
-                    <div class="inline-flex flex-column gap-2">
-                        <label for="password" class="font-semibold">Confirm Password</label>
-                        <Password v-model="confPassword" :feedback="false" toggleMask :inputStyle="{ width: '100%' }" />
-                    </div>
-                    <div class="flex align-items-center gap-3">
-                        <Button label="Change Password" @click="updatePassword" class="p-3 w-full" />
-                    </div>
-                </div>
-            </template>
-        </Dialog>
         <Toast position="bottom-center" group="bc">
             <template #message="slotProps">
                 <div class="flex flex-column align-items-start" style="flex: 1">

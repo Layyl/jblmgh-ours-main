@@ -202,12 +202,22 @@ onMounted(async () => {
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
-                    <Column :style="{ width: '300px' }" field="referringHospitalDescription" header="Referring Hospital">
+                    <Column :style="{ width: '450px' }" field="fullName" header="Gender">
                         <template #body>
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
-                    <Column :style="{ width: '100px' }" field="status" header="Referral Status">
+                    <Column :style="{ width: '300px' }" field="referringHospitalDescription" header="Age">
+                        <template #body>
+                            <Skeleton></Skeleton>
+                        </template>
+                    </Column>
+                    <Column :style="{ width: '100px' }" field="status" header="Referring Hospital">
+                        <template #body>
+                            <Skeleton></Skeleton>
+                        </template>
+                    </Column>
+                    <Column :style="{ width: '50px' }" field="referringHospitalDescription" header="Referral Status">
                         <template #body>
                             <Skeleton></Skeleton>
                         </template>
@@ -226,6 +236,7 @@ onMounted(async () => {
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
                         </template>
                     </Column>
+                    <Column class="uppercase" field="Age" header="Age"></Column>
                     <Column class="uppercase" field="referringHospitalDescription" header="Referring Hospital"></Column>
                     <Column class="uppercase" header="Referral Status">
                         <template #body="slotProps">
