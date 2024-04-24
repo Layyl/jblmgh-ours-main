@@ -127,12 +127,20 @@ const getStatusClassText = (referralStatus) => {
     }
 };
 
-const redirectToViewPatient = (referralID, referralHistoryID) => {
-    router.push(`/ours/viewPatientForm?rid=${referralID}&rhid=${referralHistoryID}`);
+const redirectToViewPatient = (referralID, referralHistoryID, safru) => {
+    console.log(safru);
+    if (safru == 1) {
+        router.push(`/ours/viewPatientFormSafru?rid=${referralID}&rhid=${referralHistoryID}`);
+    } else {
+        router.push(`/ours/viewPatientForm?rid=${referralID}&rhid=${referralHistoryID}`);
+    }
 };
 
 const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
+};
+const showPrintButton = (referralHistory) => {
+    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9);
 };
 
 const fetchOutboundPatients = async () => {
@@ -154,6 +162,10 @@ const clear = async (tab) => {
         outboundMiddleName.value = '';
         fetchOutboundPatients();
     }
+};
+
+const printReferralForm = async (referralHistoryID) => {
+    window.open(`http://192.163.8.195:90/api/getReferralForm?referralHistoryID=${referralHistoryID}`);
 };
 
 const setLoadingState = async (header, text) => {
@@ -292,6 +304,13 @@ onMounted(async () => {
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
                             <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="handleCancelButton(slotProps.data.referralHistory[0])" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
+                            <Button
+                                v-if="showPrintButton(slotProps.data.referralHistory)"
+                                @click="printReferralForm(slotProps.data.referralHistory[0].encryptedReferralHistoryID)"
+                                icon="pi pi-print"
+                                label="Print"
+                                class="p-button p-button-danger"
+                            ></Button>
                         </template>
                     </Column>
                     <template #expansion="slotProps">
@@ -334,7 +353,12 @@ onMounted(async () => {
                                                 <span v-else-if="slotProps.item.arrived == 1 && slotProps.item.referralStatus > 3" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">Defferred - Arrived</span>
                                                 <span v-else-if="slotProps.item.arrived == 1 && slotProps.item.referralStatus <= 3" class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">Accepted - Arrived</span>
                                             </p>
-                                            <Button class="mr-2" @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID)" v-if="slotProps.item.referralStatus <= 3" label="View Referral"></Button>
+                                            <Button
+                                                class="mr-2"
+                                                @click="redirectToViewPatient(slotProps.item.encryptedReferralID, slotProps.item.encryptedReferralHistoryID, slotProps.item.safru)"
+                                                v-if="slotProps.item.referralStatus <= 3"
+                                                label="View Referral"
+                                            ></Button>
                                             <Button class="mr-2" severity="danger" @click="handleExpiredButton(slotProps.item)" v-if="slotProps.item.referralStatus <= 3 && slotProps.item.arrived != 1" label="Expired Patient"></Button>
                                         </template>
                                     </Card>

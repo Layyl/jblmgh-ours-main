@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import useAuth from '../service/useAuth';
 import Cookies from 'js-cookie';
 import { useRouter } from 'vue-router';
@@ -34,6 +34,9 @@ const logout = async () => {
 };
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
+
+    // Now set the 'to' property using the computed value
+    model.value[0].items[1].to = dynamicTo.value;
 });
 watch(hciID, (newVal) => {
     if (newVal === '217') {
@@ -56,6 +59,19 @@ watch(hciID, (newVal) => {
                 ]
             }
         );
+    }
+});
+
+const dynamicTo = computed(() => {
+    if (hciID.value == 271) {
+        console.log('a', model.value[0].items[1].to);
+        return '/ours/addPatient';
+    } else if (hciID.value == 100001) {
+        console.log('b', model.value[0].items[1].to);
+        return '/ours/AddPatientSafru?id=new';
+    } else {
+        console.log('c', model.value[0].items[1].to);
+        return '/ours/AddPatientForm?id=new';
     }
 });
 </script>

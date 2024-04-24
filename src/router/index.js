@@ -86,6 +86,11 @@ const router = createRouter({
                     component: () => import('@/views/pages/AddPatient.vue')
                 },
                 {
+                    path: '/ours/addPatientSafru',
+                    name: 'addPatientSafru',
+                    component: () => import('@/views/pages/AddPatientSafru.vue')
+                },
+                {
                     path: '/ours/patientMasterfile',
                     name: 'patientMasterfile',
                     component: () => import('@/views/pages/PatientMasterfile.vue')
@@ -104,6 +109,11 @@ const router = createRouter({
                     path: '/ours/viewPatientForm',
                     name: 'viewPatientForm',
                     component: () => import('@/views/pages/ViewPatientForm.vue')
+                },
+                {
+                    path: '/ours/viewPatientFormSafru',
+                    name: 'viewPatientFormSafru',
+                    component: () => import('@/views/pages/ViewPatientFormSafru.vue')
                 },
                 {
                     path: '/ours/viewPatientMasterfile',

@@ -61,7 +61,8 @@ const notificationTypes = {
     9: 'Referred to JBLMGH',
     10: 'Vital Signs Updated',
     11: 'Patient Expired',
-    12: 'New Referral From OPCEN'
+    12: 'New Referral From OPCEN',
+    13: 'New Referral From SAFRU'
 };
 
 const showNotification = (e) => {

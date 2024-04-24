@@ -79,22 +79,22 @@ onMounted(async () => {
         <div class="col-12">
             <div class="card">
                 <DataTable :value="patients.patients" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" :loading="loading" scrollDirection="both" class="mt-3">
-                    <Column field="lastName" header="Last Name"></Column>
-                    <Column field="firstName" header="First Name"></Column>
-                    <Column field="middleName" header="Middle Name"></Column>
+                    <Column field="LastName" header="Last Name"></Column>
+                    <Column field="FirstName" header="First Name"></Column>
+                    <Column field="MiddleName" header="Middle Name"></Column>
                     <Column field="gender" header="Gender">
                         <template #body="{ data }">
-                            {{ data.gender === 1 ? 'Male' : data.gender === 2 ? 'Female' : 'Unknown' }}
+                            {{ data.Gender == 'M' ? 'Male' : data.Gender == 'F' ? 'Female' : 'Unknown' }}
                         </template>
                     </Column>
-                    <Column field="birthDate" header="Date of Birth">
+                    <Column field="BirthDate" header="Date of Birth">
                         <template #body="{ data }">
-                            {{ formatDate(data.birthDate) }}
+                            {{ formatDate(data.BirthDate) }}
                         </template>
                     </Column>
                     <Column header="Action" :style="{ width: '200px' }">
                         <template #body="slotProps">
-                            <Button @click="redirectToAddPatient(slotProps.data.patientID)" icon="pi pi-user-plus" severity="primary" size="small" label="Add Referral"></Button>
+                            <Button @click="redirectToAddPatient(slotProps.data.encryptedPatientID)" icon="pi pi-user-plus" severity="primary" size="small" label="Add Referral"></Button>
                         </template>
                     </Column>
                 </DataTable>

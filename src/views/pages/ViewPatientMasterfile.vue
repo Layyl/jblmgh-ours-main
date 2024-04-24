@@ -736,6 +736,7 @@ onMounted(async () => {
                                         <template #content>
                                             <p>
                                                 Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus) }}</span>
+                                                <span v-if="referralData.arrived == 1" class="text-gray-600 font-bold"> - Arrived</span>
                                             </p>
                                         </template>
                                     </Card>
