@@ -115,8 +115,13 @@ const getStatusClassText = (referralStatus) => {
     }
 };
 
-const redirectToViewPatient = (referralID, referralHistoryID) => {
-    router.push(`/ours/viewPatientForm?rid=${referralID}&rhid=${referralHistoryID}`);
+const redirectToViewPatient = (referralID, referralHistoryID, safru) => {
+    console.log(safru);
+    if (safru == 1) {
+        router.push(`/ours/viewPatientFormSafru?rid=${referralID}&rhid=${referralHistoryID}`);
+    } else {
+        router.push(`/ours/viewPatientForm?rid=${referralID}&rhid=${referralHistoryID}`);
+    }
 };
 
 const showCancelButton = (referralHistory) => {
@@ -247,7 +252,7 @@ onMounted(async () => {
                     </Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
-                            <Button @click="redirectToViewPatient(slotProps.data.encryptedReferralID, slotProps.data.encryptedReferralHistoryID)" icon="pi pi-file" label="View" class="p-button p-button-green"></Button>
+                            <Button @click="redirectToViewPatient(slotProps.data.encryptedReferralID, slotProps.data.encryptedReferralHistoryID, slotProps.data.safru)" icon="pi pi-file" label="View" class="p-button p-button-green"></Button>
                         </template>
                     </Column>
                 </DataTable>

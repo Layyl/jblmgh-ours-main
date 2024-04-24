@@ -59,38 +59,10 @@ const genderList = ref([
     { gender: 'Male', value: 1 },
     { gender: 'Female', value: 2 }
 ]);
-const e = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 }
-]);
-const v = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 }
-]);
-const m = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 },
-    { no: '6', value: 6 }
-]);
-const painScale = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 },
-    { no: '6', value: 6 },
-    { no: '7', value: 7 },
-    { no: '8', value: 8 },
-    { no: '9', value: 9 }
-]);
+const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const m = ref([...Array(6).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const painScale = ref([...Array(9).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const jbl = ref([
     {
         label: 'Accept Patient',
@@ -532,6 +504,8 @@ const getStatusClassTL = (referralStatus) => {
             return 'bg-red-600';
         case 9:
             return 'bg-red-600';
+        case 10:
+            return 'bg-red-600';
         default:
             return 'p-tag-secondary';
     }
@@ -555,6 +529,8 @@ const getStatusClassText = (referralStatus) => {
         case 8:
             return 'text-red-600';
         case 9:
+            return 'text-red-600';
+        case 10:
             return 'text-red-600';
         default:
             return 'p-tag-secondary';
@@ -583,6 +559,8 @@ const getStatus = (referralStatus, arrived) => {
             return 'Expired Referral';
         case 9:
             return 'Expired Patient';
+        case 10:
+            return 'Returned to JBLMGH';
         default:
             return 'Unknown';
     }
@@ -706,7 +684,7 @@ onMounted(async () => {
     <div class="mb-5" v-if="referralData.status == 1 && hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
         <Menubar :model="opcenMenu" />
     </div>
-    <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.referringHospital">
+    <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.referringHospital && referralData.referralStatus >= 3">
         <Menubar :model="printOnly" />
     </div>
     <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
@@ -718,6 +696,11 @@ onMounted(async () => {
 
     <Sidebar v-model:visible="chatBox" position="right" :blockScroll="false" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
         <div class="chat-container">
+            <div class="w-full text-center">
+                <h6>
+                    MESSAGES FOR <span class="text-green-700 font-bold font-italic">{{ referralData.lastName }}, {{ referralData.firstName }}</span>
+                </h6>
+            </div>
             <div class="messages-container custom-scrollbar" id="messages-container">
                 <div :class="{ message: true, sent: m.user_id == userId, received: m.user_id != userId }" v-for="m of messages">
                     <div class="message-header">
@@ -998,19 +981,13 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="interventions">Medical Interventions/Medicines Given <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.medicalInterventions" id="interventions" autoResize rows="1" cols="30" />
+                        <Textarea v-else required readonly v-model="referralData.medicalInterventions" id="interventions" autoResize rows="3" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="course">Significant Course in the Ward/ER <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.courseInTheWard" id="course" autoResize rows="1" cols="30" />
-                    </div>
-                    <div class="field col-12 md:col-12">
-                        <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
-                        <label v-else for="course">Diagnostics Done <span class="text-red-600">*</span></label>
-                        <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.diagnosticsDone" id="course" autoResize rows="3" cols="30" />
+                        <Textarea v-else required readonly v-model="referralData.courseInTheWard" id="course" autoResize rows="3" cols="30" />
                     </div>
                     <div class="field col-12 md:col-12">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
@@ -1159,11 +1136,13 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-6rem">Department</label>
-                <Dropdown required editable v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" />
+                <Dropdown required editable v-if="hciID == 271" v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" />
+                <InputText v-else class="uppercase" required v-model="referralData.receivingDepartment" type="text" />
             </div>
             <div class="flex align-items-center gap-3 mb-2">
                 <label for="email" class="font-semibold w-6rem">Physician</label>
-                <Dropdown required editable v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Physician" />
+                <Dropdown required editable v-if="hciID == 271" v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Physician" />
+                <InputText v-else class="uppercase" required v-model="referralData.assignedDoctor" type="text" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button :disabled="referralData.receivingDepartment <= '0' || referralData.assignedDoctor <= '0'" @click="handleAccept" type="button" label="Submit" severity="primary"></Button>

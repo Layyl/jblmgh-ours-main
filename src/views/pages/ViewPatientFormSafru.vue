@@ -61,38 +61,10 @@ const injuryList = ref([
     { injury: 'Medical', value: 1 },
     { injury: 'Surgical', value: 2 }
 ]);
-const e = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 }
-]);
-const v = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 }
-]);
-const m = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 },
-    { no: '6', value: 6 }
-]);
-const painScale = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 },
-    { no: '6', value: 6 },
-    { no: '7', value: 7 },
-    { no: '8', value: 8 },
-    { no: '9', value: 9 }
-]);
+const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const m = ref([...Array(6).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const painScale = ref([...Array(9).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const jbl = ref([
     {
         label: 'Accept Patient',
@@ -411,10 +383,6 @@ const hideLoadingModal = (header, text) => {
     }, 1000);
 };
 const postAccept = async () => {
-    const validationSuccess = await validateRequiredFields();
-    if (!validationSuccess) {
-        return;
-    }
     const response = await api.post(`/acceptPatient`, referralData.value, { headers: header });
 };
 const handleAccept = async () => {
@@ -720,6 +688,11 @@ onMounted(async () => {
 
     <Sidebar v-model:visible="chatBox" position="right" :blockScroll="false" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
         <div class="chat-container">
+            <div class="w-full text-center">
+                <h6>
+                    MESSAGES FOR <span class="text-green-700 font-bold font-italic">{{ referralData.lastName }}, {{ referralData.firstName }}</span>
+                </h6>
+            </div>
             <div class="messages-container custom-scrollbar" id="messages-container">
                 <div :class="{ message: true, sent: m.user_id == userId, received: m.user_id != userId }" v-for="m of messages">
                     <div class="message-header">

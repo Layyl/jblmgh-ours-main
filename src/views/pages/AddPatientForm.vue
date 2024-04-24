@@ -35,38 +35,10 @@ const genderList = ref([
     { gender: 'Male', value: 1 },
     { gender: 'Female', value: 2 }
 ]);
-const e = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 }
-]);
-const v = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 }
-]);
-const m = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 },
-    { no: '6', value: 6 }
-]);
-const painScale = ref([
-    { no: '1', value: 1 },
-    { no: '2', value: 2 },
-    { no: '3', value: 3 },
-    { no: '4', value: 4 },
-    { no: '5', value: 5 },
-    { no: '6', value: 6 },
-    { no: '7', value: 7 },
-    { no: '8', value: 8 },
-    { no: '9', value: 9 }
-]);
+const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const m = ref([...Array(6).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
+const painScale = ref([...Array(9).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 
 const fetchPatientData = async () => {
     const response = await api.get(`/searchPatients?hospitalNo=${patientID.value}`, { headers: header });
@@ -423,15 +395,11 @@ onMounted(async () => {
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="interventions">Medical Interventions/Medicines Given <span class="text-red-600">*</span></label>
-                        <Textarea required v-model="patientData.medicalInterventions" id="interventions" autoResize rows="1" cols="30" />
+                        <Textarea required v-model="patientData.medicalInterventions" id="interventions" autoResize rows="3" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="course">Significant Course in the Ward/ER <span class="text-red-600">*</span></label>
-                        <Textarea required v-model="patientData.courseInTheWard" id="course" autoResize rows="1" cols="30" />
-                    </div>
-                    <div class="field col-12 md:col-12">
-                        <label for="course">Diagnostics Done <span class="text-red-600">*</span></label>
-                        <Textarea required v-model="patientData.diagnosticsDone" id="course" autoResize rows="3" cols="30" />
+                        <Textarea required v-model="patientData.courseInTheWard" id="course" autoResize rows="3" cols="30" />
                     </div>
                     <div class="field col-12 md:col-12">
                         <FileUpload ref="filenameRef" name="filenames[]" :showUploadButton="false" :showCancelButton="false" :multiple="true" accept="image/*" :maxFileSize="10000000">

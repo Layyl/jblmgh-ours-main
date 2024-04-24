@@ -30,8 +30,12 @@ const showNotifs = (event) => {
     notifs.value.toggle(event);
     newNotif.value = false;
 };
-const viewNotification = (rid, rhid) => {
-    router.push(`/ours/viewPatientForm?rid=${rid}&rhid=${rhid}`);
+const viewNotification = (rid, rhid, safru) => {
+    if (safru == 1) {
+        router.push(`/ours/viewPatientFormSafru?rid=${rid}&rhid=${rhid}`);
+    } else {
+        router.push(`/ours/viewPatientForm?rid=${rid}&rhid=${rhid}`);
+    }
 };
 const onChangeTheme = (theme, mode) => {
     isDark.value = !isDark.value;
@@ -66,15 +70,15 @@ const notificationTypes = {
 };
 
 const showNotification = (e) => {
-    const { sent_to, notificationType, referralID, ri, referralHistoryID } = e;
+    const { sent_to, notificationType, referralID, ri, referralHistoryID, safru } = e;
     if (sent_to == hospID.value && notificationTypes[notificationType]) {
         const summary = notificationTypes[notificationType];
         const detail = e.notification;
 
         if (notificationType != 7) {
-            toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType });
+            toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType, safru: safru });
         } else if (notificationType == 7 && ri != refID.value) {
-            toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType });
+            toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType, safru: safru });
         }
 
         fetchNotifications();
@@ -192,7 +196,7 @@ const isOutsideClicked = (event) => {
                         </div>
                         <hr />
                         <div class="notification-list custom-scrollbar">
-                            <div @click="viewNotification(n.referralID, n.referralHistoryID)" class="notification-item cursor-pointer" v-for="n in notificationsList" :key="n.id">
+                            <div @click="viewNotification(n.referralID, n.referralHistoryID, n.safru)" class="notification-item cursor-pointer" v-for="n in notificationsList" :key="n.id">
                                 <div class="notification-content">
                                     <p>
                                         {{ n.notification }}

@@ -53,6 +53,8 @@ const getStatus = (referralStatus) => {
             return 'Expired Referral';
         case 9:
             return 'Expired Patient';
+        case 10:
+            return 'Returned to JBLMGH';
         default:
             return 'Unknown';
     }
@@ -77,6 +79,8 @@ const getStatusClass = (referralStatus) => {
         case 8:
             return 'p-tag-danger';
         case 9:
+            return 'p-tag-danger';
+        case 10:
             return 'p-tag-danger';
         default:
             return 'p-tag-secondary';
