@@ -19,16 +19,23 @@ const router = useRouter();
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 const isDark = ref(false);
 const username = Cookies.get('uname');
+const messages = ref();
 const notifs = ref();
 const hospID = ref('');
 hospID.value = Cookies.get('hciID');
+const messageNotificationsList = ref([]);
 const notificationsList = ref([]);
 const menu = ref();
 const newNotif = ref(false);
+const newMessage = ref(false);
 const refID = ref('');
 const showNotifs = (event) => {
     notifs.value.toggle(event);
     newNotif.value = false;
+};
+const showMessages = (event) => {
+    messages.value.toggle(event);
+    newMessage.value = false;
 };
 const viewNotification = (rid, rhid, safru) => {
     if (safru == 1) {
@@ -77,12 +84,13 @@ const showNotification = (e) => {
 
         if (notificationType != 7) {
             toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType, safru: safru });
+            fetchNotifications();
+            newNotif.value = true;
         } else if (notificationType == 7 && ri != refID.value) {
             toast.add({ severity: 'info', summary, detail, life: 3000, rid: referralID, rhid: referralHistoryID, notificationType: notificationType, safru: safru });
+            fetchMessageNotifications();
+            newMessage.value = true;
         }
-
-        fetchNotifications();
-        newNotif.value = true;
     }
 };
 
@@ -103,6 +111,10 @@ const fetchNotifications = async () => {
     const response = await api.get(`/fetchNotifications?user_id=${hospID.value}`, { headers: header });
     notificationsList.value = response.data.notifications;
 };
+const fetchMessageNotifications = async () => {
+    const response = await api.get(`/fetchMessageNotifications?user_id=${hospID.value}`, { headers: header });
+    messageNotificationsList.value = response.data.notifications;
+};
 
 const setToExpired = async () => {
     const response = await api.post(`/setToExpired`, '', { headers: header });
@@ -118,6 +130,7 @@ onMounted(() => {
 
     setToExpired();
     fetchNotifications();
+    fetchMessageNotifications();
     bindOutsideClickListener();
     checkTokenAndClearSession();
 });
@@ -127,9 +140,7 @@ onBeforeUnmount(() => {
 const logoUrl = computed(() => {
     return `../../src/assets/img/jbllogo.png`;
 });
-const onTopBarMenuButton = () => {
-    topbarMenuActive.value = !topbarMenuActive.value;
-};
+
 const onSettingsClick = () => {
     topbarMenuActive.value = false;
     router.push('/documentation');
@@ -177,17 +188,46 @@ const isOutsideClicked = (event) => {
             <i class="pi pi-bars"></i>
         </button>
 
-        <button class="p-link layout-topbar-menu-button" @click="onTopBarMenuButton()">
+        <button class="p-link layout-topbar-menu-button">
+            <div>
+                <i @click="showMessages" class="pi pi-envelope cursor-pointer text-2xl pl-3"> <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newMessage" :value="notificationCount" severity="danger" /> </i>
+            </div>
+        </button>
+        <button class="p-link layout-topbar-menu-button">
             <div>
                 <i @click="showNotifs" class="pi pi-bell cursor-pointer text-2xl pl-3"> <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newNotif" :value="notificationCount" severity="danger" /> </i>
             </div>
         </button>
 
+        <!-- messages-->
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
+            <i @click="showMessages" class="pi pi-envelope cursor-pointer text-2xl pl-3">
+                <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newMessage" :value="notificationCount" severity="danger" />
+            </i>
+            <div>
+                <OverlayPanel ref="messages" :dismissable="false" :showCloseIcon="false">
+                    <div class="p-4 custom-notification-panel">
+                        <div class="flex align-items-center justify-content-between">
+                            <h4>Messages</h4>
+                        </div>
+                        <hr />
+                        <div class="notification-list custom-scrollbar">
+                            <div @click="viewNotification(n.referralID, n.referralHistoryID, n.safru)" class="notification-item cursor-pointer" v-for="n in messageNotificationsList" :key="n.id">
+                                <div class="notification-content">
+                                    <p>
+                                        {{ n.notification }}
+                                    </p>
+                                    <small class="text-muted">{{ n.formatted_timestamp }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </OverlayPanel>
+            </div>
+
             <i @click="showNotifs" class="pi pi-bell cursor-pointer text-2xl pl-3">
                 <Badge style="width: 9px; height: 9px; position: absolute; margin-left: -8px" v-if="newNotif" :value="notificationCount" severity="danger" />
             </i>
-
             <div>
                 <OverlayPanel ref="notifs" :dismissable="false" :showCloseIcon="false">
                     <div class="p-4 custom-notification-panel">
@@ -206,7 +246,6 @@ const isOutsideClicked = (event) => {
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="text-center mt-3"><Button label="See All" class="p-button-text w-full" @click="seeAllNotifications" /></div> -->
                 </OverlayPanel>
             </div>
         </div>

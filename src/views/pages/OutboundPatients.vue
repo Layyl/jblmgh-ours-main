@@ -27,7 +27,10 @@ const fetching = ref(false);
 
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 
-const getStatus = (referralStatus) => {
+const getStatus = (referralStatus, arrived) => {
+    if (arrived == 1) {
+        return 'Arrived';
+    }
     switch (referralStatus) {
         case 1:
             return 'Pending';
