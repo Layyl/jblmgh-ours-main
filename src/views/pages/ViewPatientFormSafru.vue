@@ -104,14 +104,14 @@ const jbl = ref([
                 }
             }
         ]
-    },
-    {
-        label: 'Print Referral Form',
-        icon: 'pi pi-print',
-        command: () => {
-            printReferralForm();
-        }
     }
+    // {
+    //     label: 'Print Referral Form',
+    //     icon: 'pi pi-print',
+    //     command: () => {
+    //         printReferralForm();
+    //     }
+    // }
 ]);
 const opcenMenu = ref([
     {
@@ -131,14 +131,14 @@ const opcenMenu = ref([
                 }
             }
         ]
-    },
-    {
-        label: 'Print Referral Form',
-        icon: 'pi pi-print',
-        command: () => {
-            printReferralForm();
-        }
     }
+    // {
+    //     label: 'Print Referral Form',
+    //     icon: 'pi pi-print',
+    //     command: () => {
+    //         printReferralForm();
+    //     }
+    // }
 ]);
 const other = ref([
     {
@@ -154,15 +154,15 @@ const other = ref([
         command: () => {
             returnOPCEN.value = true;
         }
-    },
-    {
-        label: 'Print Referral Form',
-        icon: 'pi pi-print',
-
-        command: () => {
-            printReferralForm();
-        }
     }
+    // {
+    //     label: 'Print Referral Form',
+    //     icon: 'pi pi-print',
+
+    //     command: () => {
+    //         printReferralForm();
+    //     }
+    // }
 ]);
 const reopen = ref([
     {
@@ -171,14 +171,14 @@ const reopen = ref([
         command: () => {
             reopenModal.value = true;
         }
-    },
-    {
-        label: 'Print Referral Form',
-        icon: 'pi pi-print',
-        command: () => {
-            printReferralForm();
-        }
     }
+    // {
+    //     label: 'Print Referral Form',
+    //     icon: 'pi pi-print',
+    //     command: () => {
+    //         printReferralForm();
+    //     }
+    // }
 ]);
 const printOnly = ref([
     {
@@ -676,9 +676,9 @@ onMounted(async () => {
     <div class="mb-5" v-if="referralData.status == 1 && hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
         <Menubar :model="opcenMenu" />
     </div>
-    <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.referringHospital">
+    <!-- <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.referringHospital">
         <Menubar :model="printOnly" />
-    </div>
+    </div>-->
     <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
         <Menubar :model="other" />
     </div>

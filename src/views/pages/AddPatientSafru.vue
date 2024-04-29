@@ -287,7 +287,7 @@ onMounted(async () => {
                         <InputText class="uppercase" required v-model="patientData.firstName" id="firstName" type="text" />
                     </div>
                     <div class="field col-12 md:col-3">
-                        <label for="middleName">Middle Name <span class="text-red-600">*</span></label>
+                        <label for="middleName">Middle Name</label>
                         <InputText class="uppercase" v-model="patientData.middleName" id="middleName" type="text" />
                     </div>
                     <div class="field col-12 md:col-3">
@@ -303,27 +303,18 @@ onMounted(async () => {
                     </Divider>
                     <div class="field col-12 md:col-6">
                         <label for="street">Street</label>
-                        <InputText class="uppercase"  v-model="patientData.street" id="street" type="text" />
+                        <InputText class="uppercase" v-model="patientData.street" id="street" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
-                        <label for="province">Province <span class="text-red-600">*</span></label>
-                        <Dropdown  v-model="patientData.provinceID" :options="provinceList" optionLabel="Description" optionValue="ProvinceID" @change="fetchMunicipality()" placeholDer="Select Province" />
+                        <label for="province">Province</label>
+                        <Dropdown v-model="patientData.provinceID" :options="provinceList" optionLabel="Description" optionValue="ProvinceID" @change="fetchMunicipality()" placeholDer="Select Province" />
                     </div>
                     <div class="field col-12 md:col-6">
-                        <label for="infName">City/Municipality <span class="text-red-600">*</span></label>
-                        <Dropdown
-                            
-                            :disabled="!patientData.provinceID"
-                            v-model="patientData.municipalityID"
-                            :options="municipalityList"
-                            optionLabel="Description"
-                            optionValue="MunicipalityID"
-                            @change="fetchBarangay"
-                            placeholder="Select Municipality"
-                        />
+                        <label for="infName">City/Municipality</label>
+                        <Dropdown :disabled="!patientData.provinceID" v-model="patientData.municipalityID" :options="municipalityList" optionLabel="Description" optionValue="MunicipalityID" @change="fetchBarangay" placeholder="Select Municipality" />
                     </div>
                     <div class="field col-12 md:col-6">
-                        <label for="infName">Barangay <span class="text-red-600">*</span></label>
+                        <label for="infName">Barangay</label>
                         <Dropdown :disabled="!patientData.municipalityID" v-model="patientData.barangayID" :options="barangayList" optionLabel="Name" optionValue="Id" placeholder="Select Barangay" />
                     </div>
                 </div>
