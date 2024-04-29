@@ -113,8 +113,12 @@ const getStatusClassText = (referralStatus) => {
     }
 };
 
-const redirectToViewPatient = (referralID, referralHistoryID) => {
-    router.push(`/ours/ViewPatientMasterfile?rid=${referralID}&rhid=${referralHistoryID}`);
+const redirectToViewPatient = (referralID, referralHistoryID, safru) => {
+    if (safru == 1) {
+        router.push(`/ours/viewPatientFormSafru?rid=${referralID}&rhid=${referralHistoryID}`);
+    } else {
+        router.push(`/ours/ViewPatientMasterfile?rid=${referralID}&rhid=${referralHistoryID}`);
+    }
 };
 
 const showCancelButton = (referralHistory) => {
@@ -192,14 +196,16 @@ onMounted(async () => {
                     <Column expander style="width: 5rem" />
                     <Column class="uppercase" field="formatted_created_at" header="Date Referred"></Column>
                     <Column class="uppercase" field="fullName" header="Name"></Column>
+                    <Column field="Age" header="Age"></Column>
                     <Column class="uppercase" field="gender" header="Gender">
                         <template #body="slotProps">
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
                         </template>
                     </Column>
+                    <Column class="uppercase" field="referringHospitalDescription" header="Referred By"></Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
-                            <Button @click="redirectToViewPatient(slotProps.data.EncryptedReferralID, slotProps.data.encryptedReferralHistoryID)" label="View"></Button>
+                            <Button @click="redirectToViewPatient(slotProps.data.EncryptedReferralID, slotProps.data.referralHistory[0].encryptedReferralHistoryID, slotProps.data.safru)" label="View"></Button>
                         </template>
                     </Column>
                     <template #expansion="slotProps">
