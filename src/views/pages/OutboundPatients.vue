@@ -151,7 +151,7 @@ const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
 const showPrintButton = (referralHistory) => {
-    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9);
+    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1);
 };
 
 const fetchOutboundPatients = async () => {

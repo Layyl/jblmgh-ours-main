@@ -12,11 +12,14 @@ const emailAddress = ref('');
 const blankEmail = ref(false);
 const invalidEmail = ref(false);
 const sent = ref(false);
+const loading = ref(false);
 
 const checkEmailFormat = async (emailAddress) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailPattern.test(emailAddress)) {
+        loading.value = true;
         const response = await api.post(`/sendResetLinkEmail?email=${emailAddress}`);
+        loading.value = false;
         sent.value = true;
     } else {
         invalidEmail.value = true;
@@ -75,4 +78,11 @@ onMounted(async () => {});
             </div>
         </div>
     </div>
+
+    <Dialog v-model:visible="loading" modal header="Loading" :closable="false" :style="{ width: '25rem' }">
+        <div class="flex align-items-center gap-3 mb-3">
+            <p>Please wait as we process your request.</p>
+        </div>
+        <ProgressBar v-if="loadingProgress" mode="indeterminate" style="height: 6px"></ProgressBar>
+    </Dialog>
 </template>
