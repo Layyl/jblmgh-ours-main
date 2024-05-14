@@ -107,7 +107,7 @@ section {
 /* banner section styling start */
 .banner-con {
     padding-top: 147px;
-    background: #016e33 url(../img/graphic-img.png) no-repeat;
+    background: var(--primary--color) url(../img/graphic-img.png) no-repeat;
     background-size: cover;
 }
 
