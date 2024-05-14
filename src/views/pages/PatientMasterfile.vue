@@ -112,7 +112,6 @@ const getStatusClassText = (referralStatus) => {
             return 'p-tag-secondary';
     }
 };
-
 const redirectToViewPatient = (referralID, referralHistoryID, safru) => {
     if (safru == 1) {
         router.push(`/ours/viewPatientFormSafru?rid=${referralID}&rhid=${referralHistoryID}`);
@@ -120,30 +119,25 @@ const redirectToViewPatient = (referralID, referralHistoryID, safru) => {
         router.push(`/ours/ViewPatientMasterfile?rid=${referralID}&rhid=${referralHistoryID}`);
     }
 };
-
 const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
-
 const fetchMasterfile = async () => {
     fetching.value = true;
     const response = await api.get(`/fetchMasterfile?lastName=${masterfileLastName.value}&firstName=${masterfileFirstName.value}&middleName=${masterfileMiddleName.value}&hciID=${hciID.value}`, { headers: header });
     masterfile.value = response.data;
     fetching.value = false;
 };
-
 const clear = async (tab) => {
     masterfileLastName.value = '';
     masterfileFirstName.value = '';
     masterfileMiddleName.value = '';
     fetchMasterfile();
 };
-
 const cancelReferral = async (referralID) => {
     await api.post(`/cancelReferral?`, { referralID: referralID }, { headers: header });
     fetchMasterfile();
 };
-
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
     await fetchMasterfile();
