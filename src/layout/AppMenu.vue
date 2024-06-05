@@ -24,11 +24,12 @@ const model = ref([
 
 const logout = async () => {
     const header = { Authorization: `Bearer ${Cookies.get('token')}` };
-    const response = await axios.post('http://192.163.8.195:90/api/logout', {}, { headers: header });
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`, {}, { headers: header });
     Cookies.remove('token');
     Cookies.remove('hciID');
     Cookies.remove('uname');
     Cookies.remove('pID');
+    Cookies.remove('uID');
     localStorage.removeItem('sessionID');
     router.push('/');
 };

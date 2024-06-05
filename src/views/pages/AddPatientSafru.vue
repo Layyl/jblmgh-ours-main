@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRoute } from 'vue-router';
@@ -27,6 +27,7 @@ const filenameRef = ref(null);
 const heightFt = ref(0);
 const heightIn = ref(0);
 const heightCm = ref(0);
+const signoreCode = ref('');
 const disclaimer = ref(0);
 const saving = ref(false);
 const validation = ref(false);
@@ -35,9 +36,13 @@ const genderList = ref([
     { gender: 'Male', value: 1 },
     { gender: 'Female', value: 2 }
 ]);
-const injusryList = ref([
+const injuryList = ref([
     { injury: 'Medical', value: 1 },
     { injury: 'Surgical', value: 2 }
+]);
+const critical = ref([
+    { injury: 'Critical', value: 1 },
+    { injury: 'Non-Critical', value: 2 }
 ]);
 const e = ref([
     { no: '1', value: 1 },
@@ -175,6 +180,27 @@ const calculateHeight = () => {
     patientData.value.height = heightCm.value;
 };
 
+const generateDailySeed = () => {
+    const date = new Date();
+    return date.getMonth().toString() + date.getDate().toString() + date.getYear().toString().slice(-2);
+};
+
+const generateSigCode = () => {
+    const dailySeed = generateDailySeed();
+    const currentTime = new Date().getTime().toString();
+    const slicedTime = currentTime.slice(-4);
+    const uniqueSeed = dailySeed + currentTime;
+
+    const hash = Array.from(uniqueSeed).reduce((hash, char) => {
+        return char.charCodeAt(0) + ((hash << 5) - hash);
+    }, 0);
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letter1 = letters[Math.abs(hash) % 26];
+    const letter2 = letters[Math.abs(hash >> 5) % 26];
+
+    signoreCode.value = 'SIG-' + dailySeed + '-' + slicedTime + letter1 + letter2;
+    console.log(signoreCode.value);
+};
 const validateRequiredFields = () => {
     let error = false;
     let firstErrorField = null;
@@ -242,7 +268,24 @@ const saveData = async () => {
         }, 1000);
     });
 };
-
+watch(
+    () => patientData.value.isSignore,
+    (newValue) => {
+        if (newValue) {
+            console.log(newValue);
+            if (newValue == 1) {
+                generateSigCode();
+                patientData.value.firstName = signoreCode.value;
+                patientData.value.lastName = 'SIGNORE';
+                patientData.value.middleName = 'SIGNORE';
+            } else {
+                patientData.value.firstName = '';
+                patientData.value.lastName = '';
+                patientData.value.middleName = '';
+            }
+        }
+    }
+);
 onMounted(async () => {
     patientID.value = route.query.id;
     hciID.value = Cookies.get('hciID');
@@ -277,20 +320,25 @@ onMounted(async () => {
                         <h3 class="block text-green-600 font-medium mb-4">Patient's Information</h3>
                     </div>
                 </div>
+                <div class="block mb-3">
+                    <Checkbox class="mr-2" :binary="true" trueValue="1" falseValue="0" v-model="patientData.isSignore" />
+                    <label for="isSignore">Is Signore?</label>
+                </div>
                 <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-6">
+                    <div class="field col-12 md:col-6" v-if="patientData.isSignore == 0 || !patientData.isSignore">
                         <label for="lastName">Last Name <span class="text-red-600">*</span></label>
                         <InputText class="uppercase" required v-model="patientData.lastName" id="lastName" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
-                        <label for="firstName">First Name <span class="text-red-600">*</span></label>
-                        <InputText class="uppercase" required v-model="patientData.firstName" id="firstName" type="text" />
+                        <label v-if="patientData.isSignore == 0 || !patientData.isSignore" for="firstName">First Name <span class="text-red-600">*</span></label>
+                        <label v-else for="firstName">Patient Code <span class="text-red-600">*</span></label>
+                        <InputText class="uppercase" required :disabled="patientData.isSignore == 1" v-model="patientData.firstName" id="firstName" type="text" />
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-3" v-if="patientData.isSignore == 0 || !patientData.isSignore">
                         <label for="middleName">Middle Name</label>
                         <InputText class="uppercase" v-model="patientData.middleName" id="middleName" type="text" />
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-3" v-if="patientData.isSignore == 0 || !patientData.isSignore">
                         <label for="suffix">Suffix</label>
                         <InputText class="uppercase" v-model="patientData.suffix" id="suffix" type="text" />
                     </div>
@@ -334,12 +382,16 @@ onMounted(async () => {
                         <Textarea required v-model="patientData.impression" id="impression" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
-                        <label for="location">Location of Accident <span class="text-red-600">*</span></label>
+                        <label for="location">Location of Incident (Pick-up Location) <span class="text-red-600">*</span></label>
                         <Textarea required v-model="patientData.locationOfAccident" id="location" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <label for="gender">Type of Injury <span class="text-red-600">*</span></label>
-                        <Dropdown required :options="injusryList" v-model="patientData.typeOfInjury" optionLabel="injury" optionValue="value" placeholder="Select Type of Injury" />
+                        <Dropdown required :options="injuryList" v-model="patientData.typeOfInjury" optionLabel="injury" optionValue="value" placeholder="Select Type of Injury" />
+                    </div>
+                    <div class="field col-12 md:col-6">
+                        <label for="gender">Patient Critical? <span class="text-red-600">*</span></label>
+                        <Dropdown required :options="critical" v-model="patientData.isCritical" optionLabel="injury" optionValue="value" placeholder="Is the Patient in Critical Condition?" />
                     </div>
                 </div>
             </div>

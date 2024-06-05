@@ -41,7 +41,7 @@ const redirectToAddPatient = (patientId) => {
 const searchPatient = async () => {
     loading.value = true;
     await axios({
-        url: `http://192.163.8.195:90/api/fetchUsers?hospital=${hciID.value}`,
+        url: `${import.meta.env.VITE_API_BASE_URL}/fetchUsers?hospital=${hciID.value}`,
         method: 'GET',
         headers: header,
         data: {}

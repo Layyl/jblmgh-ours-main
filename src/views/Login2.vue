@@ -1,5 +1,5 @@
 <template>
-    <div class ="smooth-scroll">
+    <div class="smooth-scroll">
         <!-- HEADER SECTION -->
         <header class="w-100 float-left header-con">
             <div class="wrapper">
@@ -64,8 +64,8 @@
                                 <div class="form-group col-12 p-0 m-0 col-md-auto">
                                     <input type="password" @keyup.enter="login" class="form-control form-control-lg" id="exampleInputPassword1" aria-describedby="emailHelp" v-model="password" placeholder="Enter Password" />
                                 </div>
-                                <div class="col-12 col-md-auto mt-3 p-0">
-                                    <a href="#" class="btn btn-success btn-lg" @click="login">Log In</a>
+                                <div class="col-12 col-md-auto">
+                                    <Button type="button" class="border-round px-5 py-2 bg-green-600 border-none" label="Log in" :loading="loading" @click="login" />
                                 </div>
                             </div>
                             <div class="row m-1">
@@ -157,9 +157,9 @@
                     <div class="about-box-img">
                         <div class="vedio-img position-relative">
                             <div class="vedio-sub-img">
-                                <img class="thumb poster-con index1-poster" src="../assets/img/1.jpg" />
-                                <img class="thumb poster-con index1-poster" src="../assets/img/2.jpg" />
-                                <img class="thumb poster-con index1-poster" src="../assets/img/3.jpg" />
+                                <img class="thumb poster-con index1-poster" src="/img/1.jpg" />
+                                <img class="thumb poster-con index1-poster" src="/img/2.jpg" />
+                                <img class="thumb poster-con index1-poster" src="/img/3.jpg" />
                             </div>
                             <!-- <div class="btn-outer">
                 <a href="javascript:void(0)" onclick="lightbox_open();">
@@ -329,13 +329,14 @@ const username = ref('');
 const password = ref('');
 const response = ref([]);
 const visible = ref(false);
-
+const loading = ref(false);
 const forgetPassword = () => {
     router.push('/forgot-password-assistance');
 };
 
 const login = async () => {
-    const response = await axios.post('http://192.163.8.195:90/api/login', {
+    loading.value = true;
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/login`, {
         username: username.value,
         password: password.value
     });
@@ -353,6 +354,7 @@ const login = async () => {
         username.value = '';
         password.value = '';
     }
+    loading.value = false;
 };
 
 const showWarn = () => {

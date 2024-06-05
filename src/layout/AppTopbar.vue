@@ -98,14 +98,40 @@ window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
+    wssPort: 70,
+    forceTLS: true,
+    encrypted: true,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false
+    enabledTransports: ['ws', 'wss']
 });
 window.Echo.channel('notification').listen('NewNotification', showNotification);
-window.Echo.connector.pusher.connection.bind('connected', function () {});
+// Access the Pusher instance from Echo
+const pusher = window.Echo.connector.pusher;
+
+// Bind to the 'connected' event
+pusher.connection.bind('connected', function () {
+    console.log('WebSocket is connected.');
+});
+
+// Bind to other connection events if needed
+pusher.connection.bind('connecting_in', function () {
+    console.log('WebSocket is reconnecting.');
+});
+
+pusher.connection.bind('disconnected', function () {
+    console.log('WebSocket is disconnected.');
+});
+
+pusher.connection.bind('state_change', function (states) {
+    console.log('Connection state changed from ' + states.previous + ' to ' + states.current);
+});
+
+pusher.connection.bind('error', function (err) {
+    console.error('WebSocket encountered an error:', err);
+});
 
 const fetchNotifications = async () => {
     const response = await api.get(`/fetchNotifications?user_id=${hospID.value}`, { headers: header });
@@ -138,7 +164,7 @@ onBeforeUnmount(() => {
     unbindOutsideClickListener();
 });
 const logoUrl = computed(() => {
-    return `../../src/assets/img/jbllogo.png`;
+    return `/img/jbllogo.png`;
 });
 
 const onSettingsClick = () => {
@@ -179,7 +205,7 @@ const isOutsideClicked = (event) => {
 <template>
     <div class="layout-topbar">
         <router-link to="/" class="layout-topbar-logo">
-            <img :src="logoUrl" alt="logo" />
+            <img src="/img/jbllogo.png" alt="logo" />
 
             <p>ONE UNIFIED REFERRAL SYSTEM</p>
         </router-link>

@@ -61,134 +61,69 @@ const injuryList = ref([
     { injury: 'Medical', value: 1 },
     { injury: 'Surgical', value: 2 }
 ]);
+const critical = ref([
+    { injury: 'Critical', value: 1 },
+    { injury: 'Non-Critical', value: 2 }
+]);
 const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const m = ref([...Array(6).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const painScale = ref([...Array(9).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
-const jbl = ref([
+const jblDeferItems = [
     {
-        label: 'Accept Patient',
-        icon: 'pi pi-check',
+        label: 'Referring HCI Given Management',
         command: () => {
-            accept.value = true;
+            referralData.value.deferReason = 4;
+            defer.value = true;
         }
     },
     {
-        label: 'Defer Patient',
-        icon: 'pi pi-times',
-        items: [
-            {
-                label: 'Referring HCI Given Management',
-                command: () => {
-                    referralData.value.deferReason = 4;
-                    defer.value = true;
-                }
-            },
-            {
-                label: 'Patient Refused Transfer',
-                command: () => {
-                    referralData.value.deferReason = 5;
-                    defer.value = true;
-                }
-            },
-            {
-                label: 'Refer to Other HCI',
-                command: () => {
-                    refer.value = true;
-                }
-            },
-            {
-                label: 'Refer to OPCEN',
-                command: () => {
-                    opcen.value = true;
-                }
-            }
-        ]
-    }
-    // {
-    //     label: 'Print Referral Form',
-    //     icon: 'pi pi-print',
-    //     command: () => {
-    //         printReferralForm();
-    //     }
-    // }
-]);
-const opcenMenu = ref([
-    {
-        label: 'Actions',
-        icon: 'pi pi-cog',
-        items: [
-            {
-                label: 'Refer to Other HCI',
-                command: () => {
-                    referOPCEN.value = true;
-                }
-            },
-            {
-                label: 'Return to JBLMGH',
-                command: () => {
-                    returnJBL.value = true;
-                }
-            }
-        ]
-    }
-    // {
-    //     label: 'Print Referral Form',
-    //     icon: 'pi pi-print',
-    //     command: () => {
-    //         printReferralForm();
-    //     }
-    // }
-]);
-const other = ref([
-    {
-        label: 'Accept Patient',
-        icon: 'pi pi-check',
+        label: 'Patient Refused Transfer',
         command: () => {
-            accept.value = true;
+            referralData.value.deferReason = 5;
+            defer.value = true;
         }
     },
     {
-        label: 'Defer Patient',
-        icon: 'pi pi-times',
+        label: 'Refer to Other HCI',
         command: () => {
-            returnOPCEN.value = true;
+            refer.value = true;
         }
-    }
-    // {
-    //     label: 'Print Referral Form',
-    //     icon: 'pi pi-print',
-
-    //     command: () => {
-    //         printReferralForm();
-    //     }
-    // }
-]);
-const reopen = ref([
+    },
     {
-        label: 'Reopen Referral',
-        icon: 'pi pi-refresh',
+        label: 'Refer to OPCEN',
         command: () => {
-            reopenModal.value = true;
+            opcen.value = true;
         }
     }
-    // {
-    //     label: 'Print Referral Form',
-    //     icon: 'pi pi-print',
-    //     command: () => {
-    //         printReferralForm();
-    //     }
-    // }
-]);
-const printOnly = ref([
+];
+const opcenDeferItems = [
     {
-        label: 'Print Referral Form',
-        icon: 'pi pi-print',
+        label: 'Refer to Other HCI',
         command: () => {
-            printReferralForm();
+            referOPCEN.value = true;
+        }
+    },
+    {
+        label: 'Return to JBLMGH',
+        command: () => {
+            returnJBL.value = true;
         }
     }
-]);
+];
+const op = ref();
+const toggle = (event) => {
+    op.value.toggle(event);
+};
+const acceptPatientTrigger = () => {
+    accept.value = true;
+};
+const deferPatientTrigger = () => {
+    returnOPCEN.value = true;
+};
+const reopenPatientTrigger = () => {
+    reopenModal.value = true;
+};
 const fetchReferralData = async () => {
     const response = await api.get(`/fetchReferralData?referralHistoryID=${referralHistoryID.value}&hciID=${hciID.value}`, { headers: header });
     const referral = response.data.referrals[0];
@@ -479,7 +414,7 @@ const handleChatboxClick = async () => {
     }, 100);
 };
 const printReferralForm = async () => {
-    window.open(`http://192.163.8.195:90/api/getReferralForm?referralHistoryID=${referralHistoryID.value}`);
+    window.open(`${import.meta.env.VITE_API_BASE_URL}/getReferralForm?referralHistoryID=${referralHistoryID.value}`);
 };
 const getStatusClassTL = (referralStatus) => {
     switch (referralStatus) {
@@ -624,11 +559,14 @@ window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
+    wssPort: 70,
+    forceTLS: true,
+    encrypted: true,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false
+    enabledTransports: ['ws', 'wss']
 });
 onMounted(async () => {
     // Subscribe to 'chat' channel
@@ -676,21 +614,71 @@ onMounted(async () => {
         </div>
     </div>
 
+    <!-- JBL -->
     <div class="mb-5" v-if="referralData.status == 1 && hciID == 271 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
-        <Menubar :model="jbl" />
+        <div class="card p-3">
+            <div class="flex gap-2 justify-content-end">
+                <Button label="Accept Patient" icon="pi pi-check" @click="acceptPatientTrigger" />
+                <Button type="button" icon="pi pi-times" label="Defer Patient" severity="warning" @click="toggle" />
+                <OverlayPanel ref="op">
+                    <div class="flex flex-column gap-3 w-25rem">
+                        <div>
+                            <ul class="list-none p-0 m-0 flex flex-column gap-1">
+                                <li v-for="item in jblDeferItems" class="flex align-items-center gap-1 hover:bg-gray-300 p-2 m-0" @click="item.command">
+                                    <div class="cursor-pointer">
+                                        <p class="font-medium">{{ item.label }}</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </OverlayPanel>
+            </div>
+        </div>
     </div>
+    <!-- JBL -->
+    <!-- OPCEN -->
     <div class="mb-5" v-if="referralData.status == 1 && hciID == 100000 && hciID == referralData.receivingHospital && referralData.referralStatus <= 2">
-        <Menubar :model="opcenMenu" />
+        <div class="card p-3">
+            <div class="flex gap-2 justify-content-end">
+                <Button type="button" icon="pi pi-times" label="Defer Patient" severity="warning" @click="toggle" />
+                <OverlayPanel ref="op">
+                    <div class="flex flex-column gap-3 w-25rem">
+                        <div>
+                            <ul class="list-none p-0 m-0 flex flex-column gap-1">
+                                <li v-for="item in opcenDeferItems" class="flex align-items-center gap-1 hover:bg-gray-300 p-2 m-0" @click="item.command">
+                                    <div class="cursor-pointer">
+                                        <p class="font-medium">{{ item.label }}</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </OverlayPanel>
+            </div>
+        </div>
     </div>
-    <!-- <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.referringHospital">
-        <Menubar :model="printOnly" />
-    </div>-->
+    <!-- OPCEN -->
+
+    <!-- otherHCI -->
     <div class="mb-5" v-if="referralData.status == 1 && hciID == referralData.receivingHospital && hciID != 271 && hciID != 100000 && referralData.referralStatus <= 2">
-        <Menubar :model="other" />
+        <div class="card p-3">
+            <div class="flex gap-2 justify-content-end">
+                <Button label="Accept Patient" icon="pi pi-check" @click="acceptPatientTrigger" />
+                <Button type="button" icon="pi pi-times" label="Defer Patient" severity="warning" @click="deferPatientTrigger" />
+            </div>
+        </div>
     </div>
+    <!-- otherHCI -->
+    <!-- REOPEN -->
     <div class="mb-5" v-if="referralData.status == 1 && referralData && hciID == referralData.receivingHospital && (referralData.referralStatus == 4 || referralData.referralStatus == 5)">
-        <Menubar :model="reopen" />
+        <div class="card p-3">
+            <div class="flex gap-2 justify-content-end">
+                <Button type="button" icon="pi pi-times" label="Reopen Referral" severity="warning" @click="reopenPatientTrigger" />
+            </div>
+        </div>
     </div>
+    <!-- REOPEN -->
 
     <Sidebar v-model:visible="chatBox" position="right" :blockScroll="false" style="height: 100%" class="w-full md:w-30rem lg:w-30rem">
         <div class="chat-container">
@@ -784,7 +772,7 @@ onMounted(async () => {
                     </div>
                 </div>
                 <div class="p-fluid formgrid grid">
-                    <div class="field col-12 md:col-6">
+                    <div class="field col-12 md:col-6" v-if="referralData.isSignore != '1'">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="lastName">Last Name <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
@@ -796,13 +784,13 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <InputText v-else class="uppercase" required readonly v-model="referralData.firstName" id="firstName" type="text" />
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-3" v-if="referralData.isSignore != '1'">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="middleName">Middle Name <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <InputText v-else class="uppercase" required readonly v-model="referralData.middleName" id="middleName" type="text" />
                     </div>
-                    <div class="field col-12 md:col-3">
+                    <div class="field col-12 md:col-3" v-if="referralData.isSignore != '1'">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="suffix">Suffix</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
@@ -871,6 +859,12 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <Dropdown v-else required disabled :options="injuryList" readonly v-model="referralData.typeOfInjury" optionLabel="injury" optionValue="value" placeholder="Select Gender" />
                     </div>
+                    <div class="field col-12 md:col-6">
+                        <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
+                        <label v-else for="gender">Is Critical? <span class="text-red-600">*</span></label>
+                        <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
+                        <Dropdown v-else required disabled :options="critical" readonly v-model="referralData.isCritical" optionLabel="injury" optionValue="value" placeholder="Select Gender" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -885,17 +879,29 @@ onMounted(async () => {
         </Dialog>
 
         <!-- ACCEPT PATIENT JBL -->
-        <Dialog closable v-model:visible="accept" modal header="Accept Patient" :closable="false" :style="{ width: '26rem' }">
+        <Dialog closable v-model:visible="accept" modal header="Accept Patient" :closable="false" :style="{ width: '35rem' }">
             <div class="flex align-items-center gap-3 mb-3">
                 <p>Please select receiving department and assigned physician to proceed.</p>
             </div>
             <div class="flex align-items-center gap-3 mb-3">
-                <label for="department" class="font-semibold w-6rem">Department</label>
-                <Dropdown required editable v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" />
+                <label for="department" class="font-semibold w-15rem">Primary Department</label>
+                <Dropdown required editable v-if="hciID == 271" v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
+                <InputText v-else class="uppercase" required v-model="referralData.receivingDepartment" type="text" />
             </div>
-            <div class="flex align-items-center gap-3 mb-2">
-                <label for="email" class="font-semibold w-6rem">Physician</label>
-                <Dropdown required editable v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Physician" />
+            <div class="flex align-items-center gap-4 mb-3">
+                <label for="email" class="font-semibold w-15rem">Physician</label>
+                <Dropdown required editable v-if="hciID == 271" v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Primary Physician" />
+                <InputText v-else class="uppercase" required v-model="referralData.assignedDoctor" type="text" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-3">
+                <label for="department" class="font-semibold w-15rem">Secondary Department</label>
+                <Dropdown required editable v-if="hciID == 271" v-model="referralData.secondaryReceivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Secondary Department" />
+                <InputText v-else class="uppercase" required v-model="referralData.secondaryReceivingDepartment" type="text" />
+            </div>
+            <div class="flex align-items-center gap-4 mb-3">
+                <label for="email" class="font-semibold w-15rem">Physician</label>
+                <Dropdown required editable v-if="hciID == 271" v-model="referralData.secondaryAssignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Secondary Physician" />
+                <InputText v-else class="uppercase" required v-model="referralData.secondaryAssignedDoctor" type="text" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button :disabled="referralData.receivingDepartment <= '0' || referralData.assignedDoctor <= '0'" @click="handleAccept" type="button" label="Submit" severity="primary"></Button>

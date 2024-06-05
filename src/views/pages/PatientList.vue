@@ -10,9 +10,12 @@ import Pusher from 'pusher-js';
 const router = useRouter();
 const inboundPatients = ref([]);
 const hciID = ref('');
+const userID = ref('');
 const inboundLastName = ref('');
 const inboundFirstName = ref('');
 const inboundMiddleName = ref('');
+const inboundDepartment = ref('');
+const services = ref([]);
 const tableSkeleton = ref(new Array(5));
 const expandedRows = ref([]);
 const fetching = ref(false);
@@ -31,9 +34,9 @@ const getStatus = (referralStatus) => {
         case 5:
             return 'Px Refused Transfer';
         case 6:
-            return 'Transferred to OPCEN';
+            return 'Trans. to OPCEN';
         case 7:
-            return 'Transferred to other HCI';
+            return 'Trans. to other HCI';
         case 8:
             return 'Expired Referral';
         case 9:
@@ -134,11 +137,32 @@ const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
 
+const searchPatient = async () => {
+    if (hciID.value == '271' || userID.value == '14') {
+        await fetchInboundPatientsOB();
+    } else {
+        await fetchInboundPatientsOB();
+    }
+};
+
 const fetchInboundPatients = async () => {
     fetching.value = true;
-    const response = await api.get(`/fetchInboundPatients?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
+    const response = await api.get(`/fetchInboundPatients?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&department=${inboundDepartment.value}&hciID=${hciID.value}`, { headers: header });
     inboundPatients.value = response.data;
     fetching.value = false;
+};
+
+const fetchInboundPatientsOB = async () => {
+    fetching.value = true;
+    const response = await api.get(`/fetchInboundPatientsOB?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
+    inboundPatients.value = response.data;
+    fetching.value = false;
+};
+
+const fetchDepartments = async () => {
+    const response = await api.get(`/fetchServiceTypes`, { headers: header });
+    services.value = response.data;
+    console.log(services.value);
 };
 
 const clear = async (tab) => {
@@ -170,16 +194,25 @@ window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
+    wssPort: 70,
+    forceTLS: true,
+    encrypted: true,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false
+    enabledTransports: ['ws', 'wss']
 });
 onMounted(async () => {
     window.Echo.channel('notification').listen('NewNotification', reload);
     hciID.value = Cookies.get('hciID');
-    await fetchInboundPatients();
+    userID.value = Cookies.get('uID');
+    await fetchDepartments();
+    if (hciID.value == '271' && userID.value == '14') {
+        await fetchInboundPatientsOB();
+    } else {
+        await fetchInboundPatients();
+    }
 });
 </script>
 
@@ -197,8 +230,9 @@ onMounted(async () => {
                     <InputText @keyup.enter="fetchInboundPatients" class="w-full mt-1 mx-2" id="lastName" placeholder="Last Name" type="text" v-model="inboundLastName" />
                     <InputText @keyup.enter="fetchInboundPatients" class="w-full mt-1 mx-2" id="firstName" placeholder="First Name" type="text" v-model="inboundFirstName" />
                     <InputText @keyup.enter="fetchInboundPatients" class="w-full mt-1 mx-2" id="middleName" placeholder="Middle Name" type="text" v-model="inboundMiddleName" />
+                    <Dropdown :disabled="userID == 14" v-model="inboundDepartment" :options="services" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" class="w-full mt-1 mx-2" />
                     <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
-                        <Button @click="fetchInboundPatients" class="w-full mx-2" type="button" icon="pi pi-search" label="Search" />
+                        <Button @click="searchPatient" class="w-full mx-2" type="button" icon="pi pi-search" label="Search" />
                         <Button @click="clear(1)" class="w-full mx-2" severity="danger" type="button" icon="pi pi-times" label="Clear" />
                     </div>
                 </div>
@@ -228,6 +262,11 @@ onMounted(async () => {
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
+                    <Column :style="{ width: '100px' }" field="status" header="Intended Department">
+                        <template #body>
+                            <Skeleton></Skeleton>
+                        </template>
+                    </Column>
                     <Column :style="{ width: '50px' }" field="referringHospitalDescription" header="Referral Status">
                         <template #body>
                             <Skeleton></Skeleton>
@@ -249,11 +288,19 @@ onMounted(async () => {
                     </Column>
                     <Column class="uppercase" field="Age" header="Age"></Column>
                     <Column class="uppercase" field="referringHospitalDescription" header="Referring Hospital"></Column>
+                    <Column class="uppercase" field="serviceType" header="Intended Department"></Column>
                     <Column class="uppercase" header="Referral Status">
                         <template #body="slotProps">
-                            <Tag v-if="slotProps.data.arrived !== 1" :value="getStatus(slotProps.data.referralStatus)" :class="getStatusClass(slotProps.data.referralStatus)" />
+                            <Tag
+                                v-if="slotProps.data.inTransit == 1 && slotProps.data.arrived != 1 && slotProps.data.referralStatus == 3"
+                                value="In Transit"
+                                class="p-tag-info cursor-pointer"
+                                tabindex="1"
+                                v-tooltip.focus.bottom="'Vehicle Plate #: ' + slotProps.data.vehicleNumber + ' \n \n Vehicle Type: ' + slotProps.data.vehicleType"
+                            />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus > 3" value="Deferred - Arrived" class="p-tag-danger" />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus <= 3" value="Arrived" class="p-tag-success" />
+                            <Tag v-else :value="getStatus(slotProps.data.referralStatus)" :class="getStatusClass(slotProps.data.referralStatus)" />
                         </template>
                     </Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">

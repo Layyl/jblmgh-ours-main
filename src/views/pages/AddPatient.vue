@@ -25,7 +25,7 @@ const fetchERCensus = async () => {
 const searchPatient = async () => {
     loading.value = true;
     await axios({
-        url: `http://192.163.8.195:90/api/searchPatients?lastName=${lastName.value}&firstName=${firstName.value}&middleName=${middleName.value}`,
+        url: `${import.meta.env.VITE_API_BASE_URL}/searchPatients?lastName=${lastName.value}&firstName=${firstName.value}&middleName=${middleName.value}`,
         method: 'GET',
         headers: header,
         data: {}
@@ -68,6 +68,7 @@ onMounted(async () => {
                     <InputText :disabled="loading" @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="lastName" placeholder="Last Name" type="text" v-model="lastName" />
                     <InputText :disabled="loading" @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="firstName" placeholder="First Name" type="text" v-model="firstName" />
                     <InputText :disabled="loading" @keyup.enter="searchPatient" class="mt-1 mx-2 w-full" id="middleName" placeholder="Middle Name" type="text" v-model="middleName" />
+                   
                     <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
                         <Button @click="searchPatient" class="mx-2 w-full" :disabled="lastName == ''" type="button" icon="pi pi-search" label="Search" :loading="loading" />
                         <Button @click="clear" class="mx-2 w-full" severity="danger" type="button" icon="pi pi-times" label="Clear" :loading="loading" />

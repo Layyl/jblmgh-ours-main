@@ -17,6 +17,7 @@ const hciID = ref('');
 const inboundPatients = ref([]);
 const erCensusPie = ref([]);
 const erCensus = ref([]);
+const erCensusDept = ref([]);
 const dashboardCensus = ref('');
 const tempPasswordChanged = ref('');
 const userID = ref('');
@@ -90,6 +91,12 @@ const getRecentInbound = async () => {
     const response = await api.get(`/fetchInboundPatients?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
     inboundPatients.value = response.data;
 };
+const fetchInboundPatientsOB = async () => {
+    fetching.value = true;
+    const response = await api.get(`/fetchInboundPatientsOB?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
+    inboundPatients.value = response.data;
+    fetching.value = false;
+};
 const fetchDashboardCensus = async () => {
     const response = await api.get(`/fetchDashboardCensus?hciID=${hciID.value}`, { headers: header });
     dashboardCensus.value = response.data;
@@ -97,6 +104,11 @@ const fetchDashboardCensus = async () => {
 const fetchERCensus = async () => {
     const response = await api.get(`/fetchERCount`, { headers: header });
     erCensus.value = response.data[0];
+};
+const fetchERData = async () => {
+    const response = await api.get(`/getDashboardStats`, { headers: header });
+    erCensusDept.value = response.data;
+    console.log(erCensusDept.value);
 };
 const checkPasswordRequirements = (password) => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -128,21 +140,57 @@ window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
+    wssPort: 70,
+    forceTLS: true,
+    encrypted: true,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false
+    debug: true,
+    log: true,
+    enabledTransports: ['ws', 'wss']
 });
 onMounted(async () => {
     window.Echo.channel('notification').listen('NewNotification', reload);
+    // Access the Pusher instance from Echo
+    const pusher = window.Echo.connector.pusher;
+
+    // Bind to the 'connected' event
+    pusher.connection.bind('connected', function () {
+        console.log('WebSocket is connected.');
+    });
+
+    // Bind to other connection events if needed
+    pusher.connection.bind('connecting_in', function () {
+        console.log('WebSocket is reconnecting.');
+    });
+
+    pusher.connection.bind('disconnected', function () {
+        console.log('WebSocket is disconnected.');
+    });
+
+    pusher.connection.bind('state_change', function (states) {
+        console.log('Connection state changed from ' + states.previous + ' to ' + states.current);
+    });
+
+    pusher.connection.bind('error', function (err) {
+        console.error('WebSocket encountered an error:', err);
+    });
     fetching.value = true;
     hciID.value = Cookies.get('hciID');
+    userID.value = Cookies.get('uID');
+    console.log(userID.value);
     tempPasswordChanged.value = Cookies.get('tempPass');
-    userID.value = Cookies.get('pID');
     fetchERCensus();
+    fetchERData();
     await fetchDashboardCensus();
-    await getRecentInbound();
+
+    if (hciID.value == '271' && userID.value == '14') {
+        await fetchInboundPatientsOB();
+    } else {
+        await getRecentInbound();
+    }
     fetching.value = false;
 });
 </script>
@@ -213,45 +261,7 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
-        <div class="col-12 xl:col-4">
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-5">
-                    <h5>JBLMGH ER Census</h5>
-                </div>
-                <ul class="list-none p-0 m-0">
-                    <Skeleton v-if="fetching" class="mb-3" width="auto" height="1rem"></Skeleton>
-                    <li v-else class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">On Going Consultations</span>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <span class="text-green-400 ml-3 font-medium">{{ erCensus.ongoing_ED_consultation_total }} Patients</span>
-                        </div>
-                    </li>
-                    <Skeleton v-if="fetching" class="mb-3" width="auto" height="1rem"></Skeleton>
-                    <li v-else class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Admitted Patients</span>
-                            <div class="mt-1 text-600">Staying in the ER</div>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <span class="text-green-500 ml-3 font-medium">{{ erCensus.admitted_still_at_ED_total }} Patients</span>
-                        </div>
-                    </li>
-                    <Skeleton v-if="fetching" class="mb-3" width="auto" height="1rem"></Skeleton>
-                    <li v-else class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-4">
-                        <div>
-                            <span class="text-900 font-medium mr-2 mb-1 md:mb-0">Total Number of Patients in the ER</span>
-                        </div>
-                        <div class="mt-2 md:mt-0 flex align-items-center">
-                            <span class="text-green-600 ml-3 font-bold">{{ erCensus.total_patients_total }} Patients</span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="col-12 xl:col-8">
+        <div class="col-12 xl:col-12">
             <div class="card">
                 <h5>Recent Referrals</h5>
                 <DataTable v-if="fetching" :value="tableSkeleton">
@@ -282,14 +292,106 @@ onMounted(async () => {
                     <Column field="referringHospitalDescription" header="Referring Hospital"></Column>
                     <Column header="Referral Status">
                         <template #body="slotProps">
-                            <Tag v-if="slotProps.data.arrived !== 1" :value="getStatus(slotProps.data.referralStatus)" :class="getStatusClass(slotProps.data.referralStatus)" />
+                            <Tag
+                                v-if="slotProps.data.inTransit == 1 && slotProps.data.arrived != 1 && slotProps.data.referralStatus == 3"
+                                value="In Transit"
+                                class="p-tag-info cursor-pointer"
+                                tabindex="1"
+                                v-tooltip.focus.bottom="'Vehicle Plate #: ' + slotProps.data.vehicleNumber + ' \n \n Vehicle Type: ' + slotProps.data.vehicleType"
+                            />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus > 3" value="Deferred - Arrived" class="p-tag-danger" />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus <= 3" value="Arrived" class="p-tag-success" />
+                            <Tag v-else :value="getStatus(slotProps.data.referralStatus)" :class="getStatusClass(slotProps.data.referralStatus)" />
                         </template>
                     </Column>
                 </DataTable>
             </div>
         </div>
+
+        <!-- <div class="col-12 xl:col-12">
+            <div class="card">
+                <div class="flex justify-content-between align-items-center mb-5">
+                    <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
+                    <h5 v-else>JBLMGH ER Census</h5>
+                </div>
+                <Skeleton v-if="fetching" class="mb-3" width="100%" height="50vh"></Skeleton>
+                <DataTable v-else size="small" :value="erCensusDept.data" tableStyle="min-width: 50rem">
+                    <Column field="department" header="Department">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.department }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-green-100" field="consultation.lessthan4hrs" header="Less than 4 hrs">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.lessthan4hrs }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-green-100" field="consultation.morethan4hrs" header="More than 4 hrs">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.morethan4hrs }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-green-100" field="consultation.ambucare" header="Ambucare">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.ambucare }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-green-100" field="consultation.total" header="Total">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.total }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-blue-100" field="admission.newlyadmitted" header="Newly Admitted">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.newlyadmitted }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-blue-100" field="admission.five_hrs" header="5 Hours">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.five_hrs }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-blue-100" field="admission.ten_hrs" header="10 Hours">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.ten_hrs }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-blue-100" field="admission.twenty_hrs" header="20 Hours">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.twenty_hrs }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-blue-100" field="admission.ambucareunit" header="ACU">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.ambucareunit }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-blue-100" field="admission.total" header="Total">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.total }}</span>
+                        </template>
+                    </Column>
+                    <Column class="text-center bg-pink-100" field="totalpatient" header="Total Patients">
+                        <template #body="slotProps">
+                            <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.totalpatient }}</span>
+                        </template>
+                    </Column>
+                </DataTable>
+                <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
+                <h5 v-else>Legend:</h5>
+                <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
+                <div v-else class="flex align-items-center">
+                    <div class="bg-green-100 m-2 p-3 w-4rem"></div>
+                    <p>Consultations</p>
+                </div>
+                <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
+                <div v-else class="flex align-items-center">
+                    <div class="bg-blue-100 m-2 p-3 w-4rem"></div>
+                    <p>Admitted Patients (No Room)</p>
+                </div>
+            </div>
+        </div> -->
+
         <Toast position="bottom-center" group="bc">
             <template #message="slotProps">
                 <div class="flex flex-column align-items-start" style="flex: 1">
@@ -302,3 +404,8 @@ onMounted(async () => {
         </Toast>
     </div>
 </template>
+<style>
+.summary-row {
+    font-weight: bold;
+}
+</style>

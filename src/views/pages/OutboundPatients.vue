@@ -14,6 +14,7 @@ const outboundLastName = ref('');
 const outboundFirstName = ref('');
 const outboundMiddleName = ref('');
 const loading = ref(false);
+const inTransit = ref(false);
 const loadingHeader = ref('');
 const loadingText = ref('');
 const loadingProgress = ref(true);
@@ -24,7 +25,24 @@ const expiredModal = ref(false);
 const tableSkeleton = ref(new Array(5));
 const expandedRows = ref([]);
 const fetching = ref(false);
-
+const vehicleNumber = ref('');
+const vehicleType = ref('');
+const eta = ref('');
+const tOInTransitID = ref('');
+const etaSelect = ref([
+    { eta: '1 HOUR', value: 1 },
+    { eta: '2 HOURS', value: 2 },
+    { eta: '3 HOURS', value: 3 },
+    { eta: '4 HOURS', value: 4 },
+    { eta: '5 HOURS', value: 5 },
+    { eta: '6 HOURS', value: 6 },
+    { eta: '7 HOURS', value: 7 },
+    { eta: '8 HOURS', value: 8 },
+    { eta: '9 HOURS', value: 9 },
+    { eta: '10 HOURS', value: 10 },
+    { eta: '11 HOURS', value: 11 },
+    { eta: '12 HOURS', value: 12 }
+]);
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 
 const getStatus = (referralStatus, arrived) => {
@@ -154,6 +172,11 @@ const showPrintButton = (referralHistory) => {
     return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1);
 };
 
+const showTransitButton = (referralHistory, inTransit) => {
+    console.log(inTransit);
+    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1 && inTransit.inTransit != 1);
+};
+
 const fetchOutboundPatients = async () => {
     fetching.value = true;
     const response = await api.get(`/fetchOutboundPatients?lastName=${outboundLastName.value}&firstName=${outboundFirstName.value}&middleName=${outboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
@@ -176,7 +199,7 @@ const clear = async (tab) => {
 };
 
 const printReferralForm = async (referralHistoryID) => {
-    window.open(`http://192.163.8.195:90/api/getReferralForm?referralHistoryID=${referralHistoryID}`);
+    window.open(`${import.meta.env.VITE_API_BASE_URL}/getReferralForm?referralHistoryID=${referralHistoryID}`);
 };
 
 const setLoadingState = async (header, text) => {
@@ -192,11 +215,16 @@ const hideLoadingModal = (header, text) => {
     setTimeout(() => {
         loading.value = false;
         location.reload();
-    }, 1000);
+    }, 3000);
 };
 
 const cancelReferral = async (forCancel) => {
     await api.post(`/cancelReferral`, forCancel, { headers: header });
+    fetchOutboundPatients();
+};
+
+const setToIntransit = async () => {
+    await api.post(`/setToIntransit`, { vehicleNumber: vehicleNumber.value, vehicleType: vehicleType.value, referral: tOInTransitID.value, eta: eta.value }, { headers: header });
     fetchOutboundPatients();
 };
 
@@ -209,6 +237,12 @@ const handleCancelClick = async () => {
     await setLoadingState('Cancelling...', 'Cancelling referral. Please wait');
     cancelReferral(forCancel.value);
     hideLoadingModal('Successfully Cancelled!🎉', 'Referral is successfully cancelled.');
+};
+const handleTransitClick = async () => {
+    await setLoadingState('Setting to en route...', 'Notifying receiving hospital that you are on the way. Please wait.');
+    await setToIntransit();
+    inTransit.value = false;
+    hideLoadingModal('Success!🎉', 'Receiving hospital is now informed that you are on the way. Please do not forget to bring the referral form. Thank you');
 };
 
 const expiredPatient = async (referralHistory) => {
@@ -238,15 +272,24 @@ const reload = async (e) => {
     }
 };
 
+const toggleInTransit = (referral) => {
+    inTransit.value = true;
+    console.log(referral);
+    tOInTransitID.value = referral;
+};
+
 window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
+    wssPort: 70,
+    forceTLS: true,
+    encrypted: true,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false
+    enabledTransports: ['ws', 'wss']
 });
 onMounted(async () => {
     window.Echo.channel('notification').listen('NewNotification', reload);
@@ -312,16 +355,23 @@ onMounted(async () => {
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
                         </template>
                     </Column>
+                    <Column class="uppercase">
+                        <template #body="slotProps">
+                            <Chip
+                                class="cursor-pointer"
+                                tabindex="1"
+                                label="In transit"
+                                icon="pi pi-car"
+                                v-if="slotProps.data.inTransit == 1"
+                                v-tooltip.focus.bottom="'Vehicle Plate #: ' + slotProps.data.vehicleNumber + ' \n \n Vehicle Type: ' + slotProps.data.vehicleType + ' \n \n ETA: ' + slotProps.data.eta + ' hour(s)'"
+                            />
+                        </template>
+                    </Column>
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
                             <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="handleCancelButton(slotProps.data.referralHistory[0])" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
-                            <Button
-                                v-if="showPrintButton(slotProps.data.referralHistory)"
-                                @click="printReferralForm(slotProps.data.referralHistory[0].encryptedReferralHistoryID)"
-                                icon="pi pi-print"
-                                label="Print"
-                                class="p-button p-button-danger"
-                            ></Button>
+                            <Button v-if="showTransitButton(slotProps.data.referralHistory, slotProps.data)" @click="toggleInTransit(slotProps.data)" icon="pi pi-car" class="p-button p-button-info mx-1"></Button>
+                            <Button v-if="showPrintButton(slotProps.data.referralHistory)" @click="printReferralForm(slotProps.data.referralHistory[0].encryptedReferralHistoryID)" icon="pi pi-print" class="p-button p-button-danger mx-1"></Button>
                         </template>
                     </Column>
                     <template #expansion="slotProps">
@@ -409,6 +459,29 @@ onMounted(async () => {
         <div class="flex justify-content-end gap-2">
             <Button @click="handleExpiredClick" type="button" label="Submit" severity="primary"></Button>
             <Button @click="cancel" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
+        </div>
+    </Dialog>
+
+    <!-- Set to in transit -->
+    <Dialog closable v-model:visible="inTransit" modal header="Set to En Route" :closable="false" :style="{ width: '27rem' }">
+        <div class="flex align-items-center gap-3 mb-3">
+            <p>Please enter the vehicle's plate number and vehicle type/model</p>
+        </div>
+        <div class="flex align-items-center gap-3 mb-3">
+            <label for="plate" class="font-semibold w-10rem">Vehicle Plate Number</label>
+            <InputText class="uppercase" required v-model="vehicleNumber" type="text" />
+        </div>
+        <div class="flex align-items-center gap-4 mb-3">
+            <label for="vehicle" class="font-semibold w-10rem">Vehicle Type/Model</label>
+            <InputText class="uppercase" required v-model="vehicleType" type="text" />
+        </div>
+        <div class="flex align-items-center gap-4 mb-3">
+            <label for="eta" class="font-semibold w-7rem">Estimated Time of Arrival</label>
+            <Dropdown class="uppercase" v-model="eta" :options="etaSelect" optionLabel="eta" optionValue="value" placeholder="Select ETA" />
+        </div>
+
+        <div class="flex justify-content-end gap-2">
+            <Button :disabled="vehicleNumber == '' || vehicleType == '' || eta == ''" @click="handleTransitClick" type="button" label="Submit" severity="primary"></Button>
         </div>
     </Dialog>
 </template>

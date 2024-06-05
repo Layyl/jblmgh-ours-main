@@ -491,7 +491,7 @@ const handleChatboxClick = async () => {
     }, 100);
 };
 const printReferralForm = async () => {
-    window.open(`http://192.163.8.195:90/api/getReferralForm?referralHistoryID=${referralHistoryID.value}`);
+    window.open(`${import.meta.env.VITE_API_BASE_URL}/getReferralForm?referralHistoryID=${referralHistoryID.value}`);
 };
 const getStatusClassTL = (referralStatus) => {
     switch (referralStatus) {
@@ -613,11 +613,14 @@ window.Pusher = Pusher;
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
+    wssPort: 70,
+    forceTLS: true,
+    encrypted: true,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
-    forceTLS: false
+    enabledTransports: ['ws', 'wss']
 });
 onMounted(async () => {
     window.Echo.channel('chat').listen('NewChatMessage', handleNewChatMessage);
