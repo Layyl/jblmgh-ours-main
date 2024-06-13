@@ -138,7 +138,7 @@ const showCancelButton = (referralHistory) => {
 };
 
 const searchPatient = async () => {
-    if (hciID.value == '271' || userID.value == '14') {
+    if (hciID.value == '271' || userID.value == '5') {
         await fetchInboundPatientsOB();
     } else {
         await fetchInboundPatientsOB();
@@ -197,8 +197,8 @@ window.Echo = new Echo({
     wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
     wssPort: 70,
-    forceTLS: true,
-    encrypted: true,
+    forceTLS: false,
+    encrypted: false,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
     enabledTransports: ['ws', 'wss']
@@ -208,7 +208,7 @@ onMounted(async () => {
     hciID.value = Cookies.get('hciID');
     userID.value = Cookies.get('uID');
     await fetchDepartments();
-    if (hciID.value == '271' && userID.value == '14') {
+    if (hciID.value == '271' && userID.value == '5') {
         await fetchInboundPatientsOB();
     } else {
         await fetchInboundPatients();

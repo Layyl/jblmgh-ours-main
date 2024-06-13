@@ -616,8 +616,8 @@ window.Echo = new Echo({
     wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
     wssPort: 70,
-    forceTLS: true,
-    encrypted: true,
+    forceTLS: false,
+    encrypted: false,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
     enabledTransports: ['ws', 'wss']

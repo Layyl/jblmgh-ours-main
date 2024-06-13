@@ -39,7 +39,7 @@
                                 </figure>
                                 <div class="phone-txt">
                                     <span class="d-block">For concerns, call us at:</span>
-                                    <a href="tel:+012(345)6789">+(045) 409-6688</a>
+                                    <a href="tel:+012(345)6789">+(045) 409-6690</a>
                                 </div>
                             </div>
                         </div>
@@ -56,7 +56,7 @@
                     <div class="banner-inner-con">
                         <div class="banner-title flex-grow-1">
                             <h1 data-aos="fade-up" data-aos-duration="700">One Unified<br />Referral System</h1>
-                            <p data-aos="fade-up" data-aos-duration="700">JBLMGH, Revolutionizing Healthcare Referrals. Seamlessly Connecting Hospitals for Efficient Patient Care. Experience Excellence in Seamless Care Delivery.</p>
+                            <p data-aos="fade-up" data-aos-duration="700">JBLMGH, Serbisyong may Lingap, Husay, at Malasakit.</p>
                             <div class="banner-btn d-flex align-items-center flex-column flex-md-row mt-4" data-aos="fade-up" data-aos-duration="700">
                                 <div class="form-group col-12 p-0 m-0 col-md-auto">
                                     <input type="email" @keyup.enter="login" class="form-control form-control-lg" id="exampleInputEmail1" aria-describedby="emailHelp" v-model="username" placeholder="Enter Username" />
@@ -288,7 +288,7 @@
                             <li><i class="fas fa-map-marker-alt"></i> Dolores, City of San Fernando, Pampanga</li>
                             <li>
                                 <i class="fas fa-phone-alt"></i>
-                                <a href="tel:+12025550153">(045) 409-6688</a>
+                                <a href="tel:+12025550153">(045) 409-6690</a>
                             </li>
                         </ul>
                     </div>

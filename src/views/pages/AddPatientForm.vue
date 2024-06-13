@@ -17,6 +17,7 @@ const patientID = ref('');
 const patientData = ref({});
 const loading = ref(false);
 const fetching = ref(false);
+const processingCount = ref();
 const HCI = ref([]);
 const civilStatus = ref([]);
 const nationality = ref([]);
@@ -64,7 +65,11 @@ const fetchCivilStatus = async () => {
     const response = await api.get(`/fetchCivilStatus`, { headers: header });
     civilStatus.value = response.data;
 };
-
+const fetchProcessingCount = async () => {
+    const response = await api.get(`/countProcessing`, { headers: header });
+    processingCount.value = response.data;
+    console.log(processingCount.value);
+};
 const fetchNationality = async () => {
     const response = await api.get(`/fetchNationality`, { headers: header });
     nationality.value = response.data;
@@ -248,7 +253,9 @@ const validateRequiredFields = () => {
 };
 
 const saveData = async () => {
-    calculateBirthdate();
+    if (patientData.value.isSignore == 1) {
+        calculateBirthdate();
+    }
     const validationSuccess = await validateRequiredFields();
     if (!validationSuccess) {
         return;
@@ -262,7 +269,7 @@ const saveData = async () => {
         saving.value = false;
         success.value = true;
         setTimeout(() => {
-            router.push('/ours/patientlist');
+            router.push('/ours/outboundPatients');
         }, 1000);
     });
 };
@@ -289,6 +296,7 @@ onMounted(async () => {
     patientID.value = route.query.id;
     hciID.value = Cookies.get('hciID');
     fetching.value = true;
+    await fetchProcessingCount();
     await fetchCivilStatus();
     await fetchNationality();
     await fetchDepartments();
@@ -305,14 +313,17 @@ onMounted(async () => {
         await fetchBarangay();
         patientData.value.referringHospital = parseInt(hciID.value);
     }
-    if (hciID.value != 271 || hciID.value != 50509) {
-        patientData.value.receivingHospital = 50509;
+    if (hciID.value != 271) {
+        patientData.value.receivingHospital = 271;
     }
     fetching.value = false;
 });
 </script>
 
 <template>
+    <Message :closable="false" severity="warn" v-if="patientData.receivingHospital == 271"
+        >JBLMGH is currently processing <span class="font-bold"> {{ processingCount.processingCount }} patient/s. </span></Message
+    >
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
             <div class="card mb-0">
@@ -330,7 +341,7 @@ onMounted(async () => {
                             v-else
                             required
                             v-model="patientData.receivingHospital"
-                            :disabled="hciID != '271' && hciID != '50509'"
+                            :disabled="hciID != '271'"
                             id="refHCI"
                             filter
                             :options="HCI"
@@ -418,7 +429,7 @@ onMounted(async () => {
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
                         <label v-else for="firstName" v-if="patientData.isSignore == 0 || !patientData.isSignore">First Name <span class="text-red-600">*</span></label>
-                        <label for="firstName" v-else>Patient Code <span class="text-red-600">*</span></label>
+                        <label for="firstName" v-else>First Name <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
                         <InputText v-else class="uppercase" :disabled="patientData.isSignore == 1" required v-model="patientData.firstName" id="firstName" type="text" />
                     </div>
@@ -704,6 +715,13 @@ onMounted(async () => {
             <Button :disabled="disclaimer != 1" type="button" label="Save" @click="saveData" icon="pi pi-save" :loading="loading" />
             <Button severity="danger" type="button" label="Cancel" icon="pi pi-times" />
         </div>
+
+        <Dialog v-model:visible="saving" modal header="Saving...⏳" :closable="false" :style="{ width: '25rem' }">
+            <div class="flex align-items-center gap-3 mb-3">
+                <p>Patient Data is currently being saved, please wait.</p>
+            </div>
+            <ProgressBar mode="indeterminate" style="height: 6px"></ProgressBar>
+        </Dialog>
         <Dialog v-model:visible="success" modal header="Success!✅" :closable="false" :style="{ width: '25rem' }">
             <div class="flex align-items-center gap-3 mb-3">
                 <p>Patient data is successfully saved.</p>

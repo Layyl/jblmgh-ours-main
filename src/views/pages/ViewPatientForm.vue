@@ -81,25 +81,25 @@ const jblDeferItems = [
             referralData.value.deferReason = 5;
             defer.value = true;
         }
-    },
-    {
-        label: 'Refer to Other HCI',
-        command: () => {
-            refer.value = true;
-        }
-    },
-    {
-        label: 'Refer to OPCEN',
-        command: () => {
-            opcen.value = true;
-        }
-    },
-    {
-        label: 'Refer to JBLMGH OPCEN',
-        command: () => {
-            jblmghopcen.value = true;
-        }
     }
+    // {
+    //     label: 'Refer to Other HCI',
+    //     command: () => {
+    //         refer.value = true;
+    //     }
+    // },
+    // {
+    //     label: 'Refer to OPCEN',
+    //     command: () => {
+    //         opcen.value = true;
+    //     }
+    // },
+    // {
+    //     label: 'Refer to JBLMGH OPCEN',
+    //     command: () => {
+    //         jblmghopcen.value = true;
+    //     }
+    // }
 ];
 const opcenDeferItems = [
     {
@@ -132,7 +132,7 @@ const fetchReferralData = async () => {
         birthDate: formattedBirthDate
     };
     if (referral.patientFiles && referral.patientFiles !== '') {
-        const patientFilesArray = referral.patientFiles.split(',').map((file) => `../uploads/${referral.referralID}/${file.trim()}`);
+        const patientFilesArray = referral.patientFiles.split(',').map((file) => `${referral.referralID}/${file.trim()}`);
 
         patientFiles.value = patientFilesArray;
     }
@@ -599,8 +599,8 @@ window.Echo = new Echo({
     wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
     wssPort: 70,
-    forceTLS: true,
-    encrypted: true,
+    forceTLS: false,
+    encrypted: false,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
     enabledTransports: ['ws', 'wss']
@@ -1064,8 +1064,8 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <div v-else class="card flex flex-row justify-content-center">
                             <div class="flex flex-wrap justify-content-center">
-                                <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`/src/uploads` + referralData.referralID + `/` + fn)">
-                                    <img :src="`/src/uploads` + referralData.referralID + `/` + fn" alt="" class="img-fluid mr-2 mb-2" width="100" />
+                                <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../../../../JBLMGH_OURS/` + fn)">
+                                    <img :src="`../../../../JBLMGH_OURS/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
                                 </div>
                             </div>
                         </div>

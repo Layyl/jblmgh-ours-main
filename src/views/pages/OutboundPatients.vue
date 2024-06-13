@@ -13,6 +13,7 @@ const hciID = ref('');
 const outboundLastName = ref('');
 const outboundFirstName = ref('');
 const outboundMiddleName = ref('');
+const processingCount = ref();
 const loading = ref(false);
 const inTransit = ref(false);
 const loadingHeader = ref('');
@@ -176,7 +177,11 @@ const showTransitButton = (referralHistory, inTransit) => {
     console.log(inTransit);
     return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1 && inTransit.inTransit != 1);
 };
-
+const fetchProcessingCount = async () => {
+    const response = await api.get(`/countProcessing`, { headers: header });
+    processingCount.value = response.data;
+    console.log(processingCount.value);
+};
 const fetchOutboundPatients = async () => {
     fetching.value = true;
     const response = await api.get(`/fetchOutboundPatients?lastName=${outboundLastName.value}&firstName=${outboundFirstName.value}&middleName=${outboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
@@ -285,8 +290,8 @@ window.Echo = new Echo({
     wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
     wssPort: 70,
-    forceTLS: true,
-    encrypted: true,
+    forceTLS: false,
+    encrypted: false,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
     enabledTransports: ['ws', 'wss']
@@ -294,11 +299,15 @@ window.Echo = new Echo({
 onMounted(async () => {
     window.Echo.channel('notification').listen('NewNotification', reload);
     hciID.value = Cookies.get('hciID');
+    await fetchProcessingCount();
     await fetchOutboundPatients();
 });
 </script>
 
 <template>
+    <Message :closable="false" severity="warn"
+        >JBLMGH is currently processing <span class="font-bold"> {{ processingCount.processingCount }} patient/s. </span></Message
+    >
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
             <div class="card">

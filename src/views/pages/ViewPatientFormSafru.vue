@@ -83,19 +83,19 @@ const jblDeferItems = [
             referralData.value.deferReason = 5;
             defer.value = true;
         }
-    },
-    {
-        label: 'Refer to Other HCI',
-        command: () => {
-            refer.value = true;
-        }
-    },
-    {
-        label: 'Refer to OPCEN',
-        command: () => {
-            opcen.value = true;
-        }
     }
+    // {
+    //     label: 'Refer to Other HCI',
+    //     command: () => {
+    //         refer.value = true;
+    //     }
+    // },
+    // {
+    //     label: 'Refer to OPCEN',
+    //     command: () => {
+    //         opcen.value = true;
+    //     }
+    // }
 ];
 const opcenDeferItems = [
     {
@@ -562,8 +562,8 @@ window.Echo = new Echo({
     wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
     wssPort: 70,
-    forceTLS: true,
-    encrypted: true,
+    forceTLS: false,
+    encrypted: false,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
     enabledTransports: ['ws', 'wss']
@@ -885,22 +885,22 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-15rem">Primary Department</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
+                <Dropdown required editable v-if="hciID != 271" v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
                 <InputText v-else class="uppercase" required v-model="referralData.receivingDepartment" type="text" />
             </div>
             <div class="flex align-items-center gap-4 mb-3">
                 <label for="email" class="font-semibold w-15rem">Physician</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Primary Physician" />
+                <Dropdown required editable v-if="hciID != 271" v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Primary Physician" />
                 <InputText v-else class="uppercase" required v-model="referralData.assignedDoctor" type="text" />
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-15rem">Secondary Department</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.secondaryReceivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Secondary Department" />
+                <Dropdown required editable v-if="hciID != 271" v-model="referralData.secondaryReceivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Secondary Department" />
                 <InputText v-else class="uppercase" required v-model="referralData.secondaryReceivingDepartment" type="text" />
             </div>
             <div class="flex align-items-center gap-4 mb-3">
                 <label for="email" class="font-semibold w-15rem">Physician</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.secondaryAssignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Secondary Physician" />
+                <Dropdown required editable v-if="hciID != 271" v-model="referralData.secondaryAssignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Secondary Physician" />
                 <InputText v-else class="uppercase" required v-model="referralData.secondaryAssignedDoctor" type="text" />
             </div>
             <div class="flex justify-content-end gap-2">

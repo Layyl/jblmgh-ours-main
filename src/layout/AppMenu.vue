@@ -40,7 +40,7 @@ onMounted(async () => {
     model.value[0].items[1].to = dynamicTo.value;
 });
 watch(hciID, (newVal) => {
-    if (newVal === '217') {
+    if (newVal === '0') {
         model.value[0].items.push(
             { label: 'Patient Master List', icon: 'pi pi-fw pi-users', to: '/ours/patientMasterfile' },
             {

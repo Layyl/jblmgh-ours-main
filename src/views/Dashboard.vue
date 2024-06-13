@@ -19,6 +19,7 @@ const erCensusPie = ref([]);
 const erCensus = ref([]);
 const erCensusDept = ref([]);
 const dashboardCensus = ref('');
+const processingCount = ref();
 const tempPasswordChanged = ref('');
 const userID = ref('');
 const password = ref('');
@@ -27,6 +28,7 @@ const notMatch = ref(false);
 const weakPass = ref(false);
 const passwordChangeSuccess = ref(false);
 const fetching = ref(true);
+const fetchingDashStats = ref(false);
 const tableSkeleton = ref(new Array(5));
 const passwordUpdateSuccess = () => {
     if (!passwordChangeSuccess.value) {
@@ -102,34 +104,20 @@ const fetchDashboardCensus = async () => {
     dashboardCensus.value = response.data;
 };
 const fetchERCensus = async () => {
+    fetchingDashStats.value = true;
     const response = await api.get(`/fetchERCount`, { headers: header });
     erCensus.value = response.data[0];
+    fetchingDashStats.value = false;
 };
 const fetchERData = async () => {
     const response = await api.get(`/getDashboardStats`, { headers: header });
     erCensusDept.value = response.data;
-    console.log(erCensusDept.value);
 };
-const checkPasswordRequirements = (password) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-    return passwordRegex.test(password);
+const fetchProcessingCount = async () => {
+    const response = await api.get(`/countProcessing`, { headers: header });
+    processingCount.value = response.data;
 };
 
-const updatePassword = async () => {
-    if (password.value !== confPassword.value) {
-        notMatch.value = true;
-        return false;
-    }
-    const isPasswordValid = checkPasswordRequirements(password.value);
-    if (!isPasswordValid) {
-        weakPass.value = true;
-    } else {
-        const response = await api.post(`/updatePassword`, { userID: userID.value, password: password.value }, { headers: header });
-        Cookies.remove('tempPass');
-        changepass.value = false;
-        passwordUpdateSuccess();
-    }
-};
 const reload = async (e) => {
     if (e.sent_to == hciID.value && e.notificationType != 7) {
         await getRecentInbound();
@@ -143,8 +131,8 @@ window.Echo = new Echo({
     wsHost: import.meta.env.VITE_PUSHER_HOST,
     wsPort: 6001,
     wssPort: 70,
-    forceTLS: true,
-    encrypted: true,
+    forceTLS: false,
+    encrypted: false,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
     disableStats: true,
     debug: true,
@@ -156,40 +144,18 @@ onMounted(async () => {
     // Access the Pusher instance from Echo
     const pusher = window.Echo.connector.pusher;
 
-    // Bind to the 'connected' event
-    pusher.connection.bind('connected', function () {
-        console.log('WebSocket is connected.');
-    });
-
-    // Bind to other connection events if needed
-    pusher.connection.bind('connecting_in', function () {
-        console.log('WebSocket is reconnecting.');
-    });
-
-    pusher.connection.bind('disconnected', function () {
-        console.log('WebSocket is disconnected.');
-    });
-
-    pusher.connection.bind('state_change', function (states) {
-        console.log('Connection state changed from ' + states.previous + ' to ' + states.current);
-    });
-
-    pusher.connection.bind('error', function (err) {
-        console.error('WebSocket encountered an error:', err);
-    });
+    fetchERCensus();
     fetching.value = true;
     hciID.value = Cookies.get('hciID');
     userID.value = Cookies.get('uID');
-    console.log(userID.value);
+    await fetchProcessingCount();
     tempPasswordChanged.value = Cookies.get('tempPass');
-    fetchERCensus();
     fetchERData();
-    await fetchDashboardCensus();
-
-    if (hciID.value == '271' && userID.value == '14') {
-        await fetchInboundPatientsOB();
+    fetchDashboardCensus();
+    if (hciID.value == '271' && userID.value == '5') {
+        fetchInboundPatientsOB();
     } else {
-        await getRecentInbound();
+        getRecentInbound();
     }
     fetching.value = false;
 });
@@ -250,13 +216,13 @@ onMounted(async () => {
                 <div class="flex justify-content-between">
                     <div>
                         <Skeleton v-if="fetching" class="mb-3" width="9rem" height="1rem"></Skeleton>
-                        <span v-else class="block text-500 font-medium mb-3">Deferred Referrals</span>
+                        <span v-else class="block text-500 font-medium mb-3">JBL is Processing</span>
                         <Skeleton v-if="fetching" width="8rem" height="2rem"></Skeleton>
-                        <div v-else class="text-900 font-medium text-xl">{{ dashboardCensus.deferredCount }} Patients</div>
+                        <div v-else class="text-900 font-medium text-xl">{{ processingCount.processingCount }} Patients</div>
                     </div>
                     <Skeleton v-if="fetching" width="3rem" height="3rem"></Skeleton>
-                    <div v-else class="flex align-items-center justify-content-center bg-red-100 border-round" style="width: 2.5rem; height: 2.5rem">
-                        <i class="pi pi-times text-red-500 text-xl"></i>
+                    <div v-else class="flex align-items-center justify-content-center bg-blue-100 border-round" style="width: 2.5rem; height: 2.5rem">
+                        <i class="pi pi-hourglass text-blue-500 text-xl"></i>
                     </div>
                 </div>
             </div>
@@ -308,20 +274,20 @@ onMounted(async () => {
             </div>
         </div>
 
-        <!-- <div class="col-12 xl:col-12">
+        <div class="col-12 xl:col-12">
             <div class="card">
                 <div class="flex justify-content-between align-items-center mb-5">
-                    <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
+                    <Skeleton v-if="fetchingDashStats" class="mb-3" width="10rem" height="2rem"></Skeleton>
                     <h5 v-else>JBLMGH ER Census</h5>
                 </div>
-                <Skeleton v-if="fetching" class="mb-3" width="100%" height="50vh"></Skeleton>
+                <Skeleton v-if="fetchingDashStats" class="mb-3" width="100%" height="50vh"></Skeleton>
                 <DataTable v-else size="small" :value="erCensusDept.data" tableStyle="min-width: 50rem">
                     <Column field="department" header="Department">
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.department }}</span>
                         </template>
                     </Column>
-                    <Column class="text-center bg-green-100" field="consultation.lessthan4hrs" header="Less than 4 hrs">
+                    <!-- <Column class="text-center bg-green-100" field="consultation.lessthan4hrs" header="Less than 4 hrs">
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.lessthan4hrs }}</span>
                         </template>
@@ -335,13 +301,13 @@ onMounted(async () => {
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.ambucare }}</span>
                         </template>
-                    </Column>
-                    <Column class="text-center bg-green-100" field="consultation.total" header="Total">
+                    </Column> -->
+                    <Column class="text-center bg-green-100" field="consultation.total" header="For Consultations">
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.consultation.total }}</span>
                         </template>
                     </Column>
-                    <Column class="text-center bg-blue-100" field="admission.newlyadmitted" header="Newly Admitted">
+                    <!-- <Column class="text-center bg-blue-100" field="admission.newlyadmitted" header="Newly Admitted">
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.newlyadmitted }}</span>
                         </template>
@@ -365,8 +331,8 @@ onMounted(async () => {
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.ambucareunit }}</span>
                         </template>
-                    </Column>
-                    <Column class="text-center bg-blue-100" field="admission.total" header="Total">
+                    </Column> -->
+                    <Column class="text-center bg-blue-100" field="admission.total" header="Admitted (No Room)">
                         <template #body="slotProps">
                             <span :class="{ 'summary-row': slotProps.data.department === 'Total' }">{{ slotProps.data.admission.total }}</span>
                         </template>
@@ -377,20 +343,8 @@ onMounted(async () => {
                         </template>
                     </Column>
                 </DataTable>
-                <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
-                <h5 v-else>Legend:</h5>
-                <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
-                <div v-else class="flex align-items-center">
-                    <div class="bg-green-100 m-2 p-3 w-4rem"></div>
-                    <p>Consultations</p>
-                </div>
-                <Skeleton v-if="fetching" class="mb-3" width="10rem" height="2rem"></Skeleton>
-                <div v-else class="flex align-items-center">
-                    <div class="bg-blue-100 m-2 p-3 w-4rem"></div>
-                    <p>Admitted Patients (No Room)</p>
-                </div>
             </div>
-        </div> -->
+        </div>
 
         <Toast position="bottom-center" group="bc">
             <template #message="slotProps">
