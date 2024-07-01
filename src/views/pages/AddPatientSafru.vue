@@ -322,7 +322,7 @@ onMounted(async () => {
                 </div>
                 <div class="block mb-3">
                     <Checkbox class="mr-2" :binary="true" trueValue="1" falseValue="0" v-model="patientData.isSignore" />
-                    <label for="isSignore">Is Signore?</label>
+                    <label for="isSignore">Is Signore/Unknown/John Doe?</label>
                 </div>
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-6" v-if="patientData.isSignore == 0 || !patientData.isSignore">
@@ -396,9 +396,13 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
-        <div class="col-12 flex flex-row gap-2 align-content-center justify-content-center">
+        <div class="col-12 flex flex-row gap-2 align-content-center justify-content-center text-center">
             <Checkbox v-model="disclaimer" inputId="disclaimer" name="disclaimer" value="1" />
-            <label for="disclaimer" class="ml-2"> I allow JBLMGH to process the patient's medical and personal information in accordance with R.A. 10173. </label>
+            <label for="disclaimer" class="ml-2">
+                I allow JBLMGH to process the patient's medical and personal information in accordance with
+                <a class="text-blue-500 text-underline" href="https://privacy.gov.ph/data-privacy-act/" target="_blank">R.A. 10173 (Data Privacy Act of 2012).</a> <br />
+                <span class="font-bold font-italic text-primary text-lg">I understand that this referral is only valid for 24 hours. Re-registration is required if referral expires. </span>
+            </label>
         </div>
         <div class="col-12 flex flex-row gap-2 align-content-center justify-content-end">
             <Button :disabled="disclaimer != 1" type="button" label="Save" @click="saveData" icon="pi pi-save" :loading="loading" />

@@ -857,13 +857,13 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="gender">Type of Injury <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled :options="injuryList" readonly v-model="referralData.typeOfInjury" optionLabel="injury" optionValue="value" placeholder="Select Gender" />
+                        <Dropdown v-else required disabled :options="injuryList" readonly v-model="referralData.typeOfInjury" optionLabel="injury" optionValue="value" placeholder="Select Injury Type" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="gender">Is Critical? <span class="text-red-600">*</span></label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled :options="critical" readonly v-model="referralData.isCritical" optionLabel="injury" optionValue="value" placeholder="Select Gender" />
+                        <Dropdown v-else required disabled :options="critical" readonly v-model="referralData.isCritical" optionLabel="injury" optionValue="value" placeholder="Select Critical Level" />
                     </div>
                 </div>
             </div>

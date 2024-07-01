@@ -7,7 +7,7 @@ import axios from 'axios';
 import AppMenuItem from './AppMenuItem.vue';
 
 const hciID = ref('');
-
+const username = ref('');
 const { checkTokenAndClearSession } = useAuth();
 const router = useRouter();
 
@@ -17,7 +17,8 @@ const model = ref([
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/ours/dashboard' },
             { label: 'Patient Registration', icon: 'pi pi-fw pi-user-plus', to: '/ours/addPatient' },
             { label: 'Inbound Patient List', icon: 'pi pi-fw pi-arrow-down', to: '/ours/patientlist' },
-            { label: 'Outbound Patients List', icon: 'pi pi-fw pi-arrow-up', to: '/ours/outboundPatients' }
+            { label: 'Outbound Patients List', icon: 'pi pi-fw pi-arrow-up', to: '/ours/outboundPatients' },
+            { label: 'Patient Master List', icon: 'pi pi-fw pi-users', to: '/ours/patientMasterfile' }
         ]
     }
 ]);
@@ -36,30 +37,35 @@ const logout = async () => {
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
 
-    // Now set the 'to' property using the computed value
     model.value[0].items[1].to = dynamicTo.value;
+
+    let uname = Cookies.get('uname');
+
+    if (uname) {
+        uname = uname.replace(/-\d+$/, '');
+    }
+
+    // Set the modified username
+    username.value = uname;
 });
 watch(hciID, (newVal) => {
     if (newVal === '0') {
-        model.value[0].items.push(
-            { label: 'Patient Master List', icon: 'pi pi-fw pi-users', to: '/ours/patientMasterfile' },
-            {
-                label: 'Settings',
-                icon: 'pi pi-fw pi-cog',
-                items: [
-                    {
-                        label: 'Manage Users',
-                        icon: 'pi pi-user-edit',
-                        to: '/ours/manageUsers'
-                    },
-                    {
-                        label: 'Manage HCIs',
-                        icon: 'pi pi-building',
-                        to: '/ours/manageHCI'
-                    }
-                ]
-            }
-        );
+        model.value[0].items.push({
+            label: 'Settings',
+            icon: 'pi pi-fw pi-cog',
+            items: [
+                {
+                    label: 'Manage Users',
+                    icon: 'pi pi-user-edit',
+                    to: '/ours/manageUsers'
+                },
+                {
+                    label: 'Manage HCIs',
+                    icon: 'pi pi-building',
+                    to: '/ours/manageHCI'
+                }
+            ]
+        });
     }
 });
 
@@ -72,7 +78,7 @@ const dynamicTo = computed(() => {
         return '/ours/AddPatientSafru?id=new';
     } else {
         console.log('c', model.value[0].items[1].to);
-        return '/ours/AddPatientForm?id=new';
+        return '/ours/addPatient';
     }
 });
 </script>
@@ -81,6 +87,13 @@ const dynamicTo = computed(() => {
     <div class="flex flex-column gap-6 h-full overflow-hidden justify-content-between">
         <ul class="layout-menu flex-grow-1">
             <template v-for="(item, i) in model" :key="item">
+                <li class="menu-separator">
+                    <div class="m-3 p-0 t">
+                        <h5>
+                            Welcome, <span class="font-bold text-green-700">{{ username }} </span>
+                        </h5>
+                    </div>
+                </li>
                 <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
                 <li v-if="item.separator" class="menu-separator"></li>
             </template>

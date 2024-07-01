@@ -134,9 +134,22 @@ pusher.connection.bind('error', function (err) {
 });
 
 const fetchNotifications = async () => {
-    const response = await api.get(`/fetchNotifications?user_id=${hospID.value}`, { headers: header });
-    notificationsList.value = response.data.notifications;
+    try {
+        const response = await api.get(`/fetchNotifications?user_id=${hospID.value}`, { headers: header });
+        notificationsList.value = response.data.notifications;
+    } catch (error) {
+        if (error.response && error.response.status === 401) {
+            Cookies.remove('token');
+            Cookies.remove('hciID');
+            Cookies.remove('uname');
+            Cookies.remove('pID');
+            Cookies.remove('uID');
+            localStorage.removeItem('sessionID');
+            router.push('/');
+        }
+    }
 };
+
 const fetchMessageNotifications = async () => {
     const response = await api.get(`/fetchMessageNotifications?user_id=${hospID.value}`, { headers: header });
     messageNotificationsList.value = response.data.notifications;

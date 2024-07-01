@@ -5,10 +5,13 @@ import Cookies from 'js-cookie';
 import { useRoute } from 'vue-router';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
+import Swal from 'sweetalert2';
 import api from '../../api';
 const route = useRoute();
 const router = useRouter();
 const savedReferralID = ref();
+const referralID = ref();
+const referralHistoryID = ref();
 const toast = useToast();
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 const hciID = ref('');
@@ -25,6 +28,7 @@ const provinceList = ref([]);
 const municipalityList = ref([]);
 const barangayList = ref([]);
 const reasonForTransfer = ref([]);
+const patientFiles = ref([]);
 const filenameRef = ref(null);
 const heightFt = ref(0);
 const heightIn = ref(0);
@@ -60,12 +64,46 @@ const fetchPatientData = async () => {
     patientData.value = { ...patientData.value, birthDate: formattedBirthDate };
 };
 
+const fetchReferralData = async () => {
+    const response = await api.get(`/fetchReferralData?referralHistoryID=${referralHistoryID.value}&hciID=${hciID.value}`, { headers: header });
+    const referral = response.data.referrals[0];
+
+    const birthDate = new Date(referral.birthDate);
+    const formattedBirthDate = `${(birthDate.getMonth() + 1).toString().padStart(2, '0')}/` + `${birthDate.getDate().toString().padStart(2, '0')}/` + `${birthDate.getFullYear()}`;
+
+    patientData.value = {
+        ...referral,
+        birthDate: formattedBirthDate
+    };
+    if (referral.patientFiles && referral.patientFiles !== '') {
+        const patientFilesArray = referral.patientFiles.split(',').map((file) => `${referral.referralID}/${file.trim()}`);
+
+        patientFiles.value = patientFilesArray;
+    }
+    convertCmToFeetAndInches(referral.height);
+};
+
+const convertCmToFeetAndInches = (cm) => {
+    const totalInches = cm / 2.54;
+    const feet = Math.floor(totalInches / 12);
+    const inches = totalInches % 12;
+    heightFt.value = feet;
+    heightIn.value = parseInt(inches);
+};
 const fetchDepartments = async () => {
     const response = await api.get(`/fetchServiceTypes`, { headers: header });
     departmentList.value = response.data;
     console.log(departmentList.value);
 };
-
+const viewImage = (url) => {
+    Swal.fire({
+        width: '100%',
+        imageUrl: url,
+        imageAlt: 'Image',
+        showCloseButton: true,
+        imageHeight: 'auto'
+    });
+};
 const fetchCivilStatus = async () => {
     const response = await api.get(`/fetchCivilStatus`, { headers: header });
     civilStatus.value = response.data;
@@ -83,11 +121,7 @@ const isPostDisabled = computed(() => {
     return disclaimer.value != 1 || (patientData.value.isSignore != 1 && (!patientData.value.provinceID || !patientData.value.municipalityID || !patientData.value.barangayID));
 });
 const isSaveDisabled = computed(() => {
-    return (
-        disclaimer.value != 1 ||
-        (patientData.value.isSignore != 1 &&
-            (!patientData.value.provinceID || !patientData.value.municipalityID || !patientData.value.barangayID || !patientData.value.civilStatus || !patientData.value.transferReason || !patientData.value.gender || !patientData.value.nationality))
-    );
+    return disclaimer.value != 1 || (patientData.value.isSignore != 1 && (!patientData.value.provinceID || !patientData.value.municipalityID || !patientData.value.barangayID));
 });
 
 const fetchProvince = async () => {
@@ -134,6 +168,27 @@ const collateFileNames = () => {
     });
 };
 
+// const collateFileNames = () => {
+//     if (patientData.value.patientFiles === '') {
+//         patientData.value.patientFiles = '';
+//         filenameRef.value.files.forEach((file, index) => {
+//             if (file.name !== undefined) {
+//                 patientData.value.patientFiles += file.name;
+//                 if (index < filenameRef.value.files.length - 1) {
+//                     patientData.value.patientFiles += ', ';
+//                 }
+//             }
+//         });
+//     } else {
+//         filenameRef.value.files.forEach((file, index) => {
+//             if (file.name !== undefined) {
+//                 patientData.value.patientFiles += ', ' + file.name;
+//             }
+//             console.log(patientData.value.patientFiles);
+//         });
+//     }
+// };
+
 const transferFiles = async () => {
     const files = filenameRef.value.files;
     const formData = new FormData();
@@ -141,7 +196,7 @@ const transferFiles = async () => {
     for (const file of files) {
         formData.append('files[]', file);
     }
-    formData.append('patientID', savedReferralID.value);
+    formData.append('patientID', patientData.value.referralID);
     const response = await api.post(`/upload`, formData, { headers: header });
     if (response.ok) {
     } else {
@@ -292,29 +347,25 @@ const saveData = async (toPost) => {
         calculateBirthdate();
     }
     if (toPost == 1) {
-        patientData.value.isPosted = '1';
+        patientData.value.isPosted = 1;
         console.log('to post: ', patientData.value.isPosted);
         const validationSuccess = await validateRequiredFields();
         if (!validationSuccess) {
             return;
         }
     } else {
-        patientData.value.isPosted = '0';
+        patientData.value.isPosted = 0;
         console.log('to post: ', patientData.value.isPosted);
     }
     saving.value = true;
     await collateFileNames();
-    const response = await api.post(`/createNewReferral`, patientData.value, { headers: header }).then(async (res) => {
+    const response = await api.post(`/updateReferral`, patientData.value, { headers: header }).then(async (res) => {
         savedReferralID.value = res.data.referralID;
         await transferFiles();
         saving.value = false;
         success.value = true;
         setTimeout(() => {
-            if (toPost == 1) {
-                router.push('/ours/outboundPatients');
-            } else {
-                router.push('/ours/addPatient');
-            }
+            router.push('/ours/outboundPatients');
         }, 1000);
     });
 };
@@ -340,6 +391,8 @@ watch(
 onMounted(async () => {
     patientID.value = route.query.id;
     hciID.value = Cookies.get('hciID');
+    referralID.value = route.query.rid;
+    referralHistoryID.value = route.query.rhid;
     fetching.value = true;
     await fetchProcessingCount();
     await fetchCivilStatus();
@@ -353,9 +406,14 @@ onMounted(async () => {
         patientData.value.newReferral = 1;
     } else {
         newReferral.value = false;
-        await fetchPatientData();
-        await fetchMunicipality();
-        await fetchBarangay();
+        // await fetchPatientData();
+        await fetchReferralData();
+        if (patientData.value.provinceID) {
+            await fetchMunicipality();
+        }
+        if (patientData.value.municipalityID) {
+            await fetchBarangay();
+        }
         patientData.value.referringHospital = parseInt(hciID.value);
     }
     if (hciID.value != 271) {
@@ -637,6 +695,21 @@ onMounted(async () => {
                                 <p>Please upload pertinent test results.</p>
                             </template>
                         </FileUpload>
+                    </div>
+                    <div class="field col-12 md:col-12">
+                        <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
+                        <label v-else for="course">Pertinent Test Result Photos</label>
+                        <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
+                        <div v-else class="card flex flex-row justify-content-center">
+                            <div class="flex flex-wrap justify-content-center">
+                                <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../../../../JBLMGH_OURS/` + fn)">
+                                    <img :src="`../../../../JBLMGH_OURS/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
+                                </div>
+                                <!-- <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../src/uploads/` + fn)">
+                                    <img :src="`../src/uploads/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
+                                </div> -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

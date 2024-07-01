@@ -263,7 +263,17 @@ onMounted(async () => {
                                 value="In Transit"
                                 class="p-tag-info cursor-pointer"
                                 tabindex="1"
-                                v-tooltip.focus.bottom="'Vehicle Plate #: ' + slotProps.data.vehicleNumber + ' \n \n Vehicle Type: ' + slotProps.data.vehicleType"
+                                v-tooltip.focus.bottom="
+                                    'Vehicle Plate #: ' +
+                                    slotProps.data.vehicleNumber +
+                                    ' \n \n Vehicle Type: ' +
+                                    slotProps.data.vehicleType +
+                                    ' \n \n In Transit Since: ' +
+                                    slotProps.data.inTransitDateTime +
+                                    ' \n \n ETA: ' +
+                                    slotProps.data.eta +
+                                    ' hour(s)'
+                                "
                             />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus > 3" value="Deferred - Arrived" class="p-tag-danger" />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus <= 3" value="Arrived" class="p-tag-success" />

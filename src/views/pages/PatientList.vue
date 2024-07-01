@@ -237,6 +237,11 @@ onMounted(async () => {
                     </div>
                 </div>
                 <DataTable v-if="fetching" :value="tableSkeleton">
+                    <Column :style="{ width: '180px' }" field="formatted_created_at" header="">
+                        <template #body>
+                            <Skeleton></Skeleton>
+                        </template>
+                    </Column>
                     <Column :style="{ width: '180px' }" field="formatted_created_at" header="Date Referred">
                         <template #body>
                             <Skeleton></Skeleton>
@@ -279,6 +284,9 @@ onMounted(async () => {
                     </Column>
                 </DataTable>
                 <DataTable v-else :value="inboundPatients.referrals" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" scrollDirection="both" class="mt-3">
+                    <Column class="uppercase" field="" header="">
+                        <template #body="slotProps"><i v-tooltip.left="'Urgent Referral'" v-if="slotProps.data.isCritical == 1" class="pi pi-exclamation-triangle text-red-400" style="font-size: 1.4rem"></i></template
+                    ></Column>
                     <Column class="uppercase" field="formatted_created_at" header="Date Referred"></Column>
                     <Column class="uppercase" field="fullName" header="Name"></Column>
                     <Column class="uppercase" field="gender" header="Gender">
@@ -296,7 +304,17 @@ onMounted(async () => {
                                 value="In Transit"
                                 class="p-tag-info cursor-pointer"
                                 tabindex="1"
-                                v-tooltip.focus.bottom="'Vehicle Plate #: ' + slotProps.data.vehicleNumber + ' \n \n Vehicle Type: ' + slotProps.data.vehicleType"
+                                v-tooltip.focus.bottom="
+                                    'Vehicle Plate #: ' +
+                                    slotProps.data.vehicleNumber +
+                                    ' \n \n Vehicle Type: ' +
+                                    slotProps.data.vehicleType +
+                                    ' \n \n In Transit Since: ' +
+                                    slotProps.data.inTransitDateTime +
+                                    ' \n \n ETA: ' +
+                                    slotProps.data.eta +
+                                    ' hour(s)'
+                                "
                             />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus > 3" value="Deferred - Arrived" class="p-tag-danger" />
                             <Tag v-else-if="slotProps.data.arrived == 1 && slotProps.data.referralStatus <= 3" value="Arrived" class="p-tag-success" />

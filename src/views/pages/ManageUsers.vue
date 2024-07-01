@@ -11,6 +11,7 @@ const lastName = ref('');
 const firstName = ref('');
 const middleName = ref('');
 const hciID = ref('');
+const verificationStatus = ref('');
 const hciList = ref([]);
 const selectedHCI = ref([]);
 const addNew = ref(false);
@@ -21,7 +22,10 @@ const savingProgress = ref(true);
 const deleteModal = ref(false);
 const idToDelete = ref('');
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
-
+const verificationStat = ref([
+    { status: 'For Verification', value: 1 },
+    { status: 'Verified', value: 2 }
+]);
 const newUser = ref({
     username: '',
     hciID: '',
@@ -41,7 +45,7 @@ const redirectToAddPatient = (patientId) => {
 const searchPatient = async () => {
     loading.value = true;
     await axios({
-        url: `${import.meta.env.VITE_API_BASE_URL}/fetchUsers?hospital=${hciID.value}`,
+        url: `${import.meta.env.VITE_API_BASE_URL}/fetchUsers?hospital=${hciID.value}&verification=${verificationStatus.value}`,
         method: 'GET',
         headers: header,
         data: {}
@@ -215,7 +219,8 @@ onMounted(async () => {
             <div class="card">
                 <h3 class="block text-500 font-">User Management</h3>
                 <div class="flex flex-column sm:flex-row gap-2 align-items-center">
-                    <Dropdown @keyup.enter="searchPatient" class="mt-1 mx-1 w-full" filter :options="hciList" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" v-model="hciID" />
+                    <InputText @keyup.enter="searchPatient" id="username" v-model="hciID" placeholder="Type Hospital Name" class="flex-auto" autocomplete="off" />
+                    <Dropdown @keyup.enter="searchPatient" @change="searchPatient" class="mt-1 mx-1 w-100" :options="verificationStat" optionLabel="status" optionValue="value" placeholder="Select Verification Status" v-model="verificationStatus" />
                     <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
                         <Button @click="searchPatient" class="mx-1" type="button" icon="pi pi-search" label="Search" :loading="loading" />
                         <Button @click="addNew = true" class="mx-1" severity="info" type="button" icon="pi pi-plus" label="Add" :loading="loading" />
@@ -226,11 +231,23 @@ onMounted(async () => {
         <div class="col-12">
             <div class="card">
                 <DataTable :value="users" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" :loading="loading" scrollDirection="both" class="mt-3">
-                    <Column field="id" header="User ID "></Column>
-                    <Column field="username" header="Username"></Column>
-                    <Column field="FacilityName" header="Hospital"></Column>
-                    <Column field="contactno" header="Contact No"></Column>
-                    <Column field="email" header="Email"></Column>
+                    <Column class="uppercase" field="id" header="User ID "></Column>
+                    <Column class="uppercase" field="username" header="Username"></Column>
+                    <Column class="uppercase" field="FacilityName" header="Hospital"></Column>
+                    <Column class="uppercase" field="contactno" header="Contact No"></Column>
+                    <Column class="uppercase" field="email" header="Email"></Column>
+                    <Column class="uppercase" field="" header="Status">
+                        <template #body="slotProps">
+                            <span
+                                :class="{
+                                    'text-green-600 font-bold': slotProps.data.email_verified_at != null || slotProps.data.remember_token !== null,
+                                    'text-yellow-600 font-bold': slotProps.data.email_verified_at == null && slotProps.data.remember_token == null
+                                }"
+                            >
+                                {{ slotProps.data.email_verified_at === null && slotProps.data.remember_token === null ? 'For Verification' : 'Verified' }}</span
+                            >
+                        </template>
+                    </Column>
                     <Column header="Action" :style="{ width: '200px' }">
                         <template #body="slotProps">
                             <div>

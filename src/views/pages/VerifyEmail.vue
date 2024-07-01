@@ -16,6 +16,10 @@ const router = useRouter();
 const encryptedEmail = ref('');
 const token = ref('');
 const isVerified = ref(false);
+const saving = ref(false);
+const savingHeader = ref('');
+const savingText = ref('');
+const savingProgress = ref(true);
 
 const verifyEmail = async () => {
     const response = await api.get(`/emailVerification?hash=${route.query.hash}&id=${route.query.id}`);
@@ -43,13 +47,35 @@ const updatePassword = async () => {
         weakPass.value = true;
     } else {
         const response = await api.post(`/setPassword`, { token: token.value, email: encryptedEmail.value, password: password.value, password_confirmation: password_confirmation.value });
-        router.push(`/success`);
     }
 };
 
-onMounted(async () => {
-    await verifyEmail();
+const handleUpdatePassword = async () => {
+    await setLoadingState('Setting your password', 'Please wait while we set things up for you.');
+    await updatePassword();
+    await hideLoadingModal('Password Changed Successfully!🥳', 'You have successfully finalized your account. You may now use it to access OURS.');
+    router.push(`/success`);
+};
 
+const setLoadingState = async (header, text) => {
+    saving.value = true;
+    savingHeader.value = header;
+    savingText.value = text;
+};
+
+const hideLoadingModal = (header, text) => {
+    savingHeader.value = header;
+    savingText.value = text;
+    savingProgress.value = false;
+    setTimeout(() => {
+        saving.value = false;
+        closeModal();
+        searchPatient();
+    }, 1000);
+};
+
+onMounted(async () => {
+    // await verifyEmail();
     encryptedEmail.value = route.query.em;
     token.value = route.query.token;
 });
@@ -87,7 +113,7 @@ onMounted(async () => {
                         <Password class="font-semibold mb-2" v-model="password_confirmation" :feedback="false" toggleMask :inputStyle="{ width: '100%' }" />
                     </div>
                     <div class="flex align-items-center mt-2">
-                        <Button label="Change Password" @click="updatePassword" class="p-3 w-full" />
+                        <Button label="Change Password" @click="handleUpdatePassword" class="p-3 w-full" />
                     </div>
                 </div>
             </div>
@@ -109,6 +135,13 @@ onMounted(async () => {
                     </div>
                 </div>
             </div>
+
+            <Dialog v-model:visible="saving" modal :header="savingHeader" :closable="false" :style="{ width: '25rem' }">
+                <div class="flex align-items-center gap-3 mb-3">
+                    <p>{{ savingText }}</p>
+                </div>
+                <ProgressBar v-if="savingProgress" mode="indeterminate" style="height: 6px"></ProgressBar>
+            </Dialog>
         </div>
     </div>
 </template>

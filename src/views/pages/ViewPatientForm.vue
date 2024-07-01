@@ -61,7 +61,10 @@ const genderList = ref([
     { gender: 'Male', value: 1 },
     { gender: 'Female', value: 2 }
 ]);
-
+const critical = ref([
+    { injury: 'Urgent', value: 1 },
+    { injury: 'Non-Urgent', value: 2 }
+]);
 const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const m = ref([...Array(6).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
@@ -247,10 +250,10 @@ const viewImage = (url) => {
         imageHeight: 'auto'
     });
 };
-const validateRequiredFields = () => {
+const validateFields = () => {
     let error = false;
-    let firstErrorField = null; // Reference to the first unfilled required field
-    const fields = document.querySelectorAll("input[required], select[required], input[type='radio'][required], textarea[required]");
+    let firstErrorField = null; // Reference to the first unfilled  field
+    const fields = document.querySelectorAll("input[], select[], input[type='radio'][], textarea[]");
 
     fields.forEach((field) => {
         if (field.type === 'radio') {
@@ -314,10 +317,10 @@ const hideLoadingModal = (header, text) => {
     }, 1000);
 };
 const postAccept = async () => {
-    const validationSuccess = await validateRequiredFields();
-    if (!validationSuccess) {
-        return;
-    }
+    // const validationSuccess = await validateFields();
+    // if (!validationSuccess) {
+    //     return;
+    // }
     const response = await api.post(`/acceptPatient`, referralData.value, { headers: header });
 };
 const handleAccept = async () => {
@@ -334,10 +337,10 @@ const handleSetDept = async () => {
     hideLoadingModal('Success!🎉', 'Department has been set successfully.');
 };
 const postEditVitals = async () => {
-    const validationSuccess = await validateRequiredFields();
-    if (!validationSuccess) {
-        return;
-    }
+    // const validationSuccess = await validateFields();
+    // if (!validationSuccess) {
+    //     return;
+    // }
     const response = await api.post(`/updateVitalSigns`, referralData.value, { headers: header });
 };
 const handleEditVitals = async () => {
@@ -649,7 +652,7 @@ onMounted(async () => {
     await fetchDoctors();
     await fetchReferralData();
     await fetchNationality();
-    if (!referralData.value.isSignore) {
+    if (!referralData.value.isSignore || referralData.value.provinceID || referralData.value.municipalityID) {
         await fetchProvince();
         await fetchMunicipality();
         await fetchBarangay();
@@ -800,7 +803,7 @@ onMounted(async () => {
                                 }"
                             >
                                 <template #marker="slotProps">
-                                    <span class="flex w-1rem h-1rem align-items-center justify-content-center text-white border-circle z-0 shadow-1" :class="getStatusClassTL(slotProps.item.referralStatus)"></span>
+                                    <span class="flex w-1rem h-1rem align-items-center justify-content-center text-white border-circle z-0 shadow-1" :class="getStatusClassTL(slotProps.item.referralStatus)"> </span>
                                 </template>
                                 <template #content="slotProps">
                                     <Card
@@ -815,15 +818,16 @@ onMounted(async () => {
                                             }
                                         }"
                                     >
-                                        <template #title>
-                                            {{ slotProps.item.receivingHospitalDescription }}
-                                        </template>
+                                        <template #title> {{ slotProps.item.receivingHospitalDescription }} </template>
                                         <template #subtitle>
                                             {{ slotProps.item.formatted_created_at }}
                                         </template>
                                         <template #content>
                                             <p>
-                                                Status: <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)">{{ getStatus(slotProps.item.referralStatus, slotProps.item.arrived) }}</span>
+                                                Status:
+                                                <span class="font-bold" :class="getStatusClassText(slotProps.item.referralStatus)"
+                                                    >{{ getStatus(slotProps.item.referralStatus, slotProps.item.arrived) }} <span v-if="slotProps.item.arrived == 1">({{ slotProps.item.formatted_arrivalDateTime }}) </span></span
+                                                >
                                                 <span v-if="referralData.status == 0" class="text-gray-600 font-bold"> - Cancelled Referral</span>
                                             </p>
                                         </template>
@@ -847,31 +851,31 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="refHCI">Referring Hospital</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.referringHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
+                        <Dropdown v-else disabled v-model="referralData.referringHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
                     </div>
                     <div v-else class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="refHCI">Receiving Hospital</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.receivingHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
+                        <Dropdown v-else disabled v-model="referralData.receivingHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="refDoc">Referring Doctor</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.referringDoctor" id="refDoc" type="text" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.referringDoctor" id="refDoc" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="refCont">Referrer's Contact Number</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.referrerContact" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.referrerContact" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="reasons">Reason for Transfer</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.transferReason" :options="reasonForTransfer" optionLabel="Description" optionValue="id" placeholder="Select Reason For Transfer" />
+                        <Dropdown v-else disabled v-model="referralData.transferReason" :options="reasonForTransfer" optionLabel="Description" optionValue="id" placeholder="Select Reason For Transfer" />
                     </div>
                     <div class="field col-12 md:col-6" v-if="referralData.transferReason == 5">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
@@ -921,19 +925,19 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="lastName">Last Name</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.lastName" id="lastName" type="text" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.lastName" id="lastName" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="firstName">First Name</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.firstName" id="firstName" type="text" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.firstName" id="firstName" type="text" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="middleName">Middle Name</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.middleName" id="middleName" type="text" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.middleName" id="middleName" type="text" />
                     </div>
                     <div class="field col-12 md:col-3">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
@@ -945,25 +949,25 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="gender">Gender</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled :options="genderList" readonly v-model="referralData.gender" optionLabel="gender" optionValue="value" placeholder="Select Gender" />
+                        <Dropdown v-else disabled :options="genderList" readonly v-model="referralData.gender" optionLabel="gender" optionValue="value" placeholder="Select Gender" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="patCont">Date of Birth</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Calendar v-else required :showIcon="true" readonly v-model="referralData.birthDate"></Calendar>
+                        <Calendar v-else :showIcon="true" readonly v-model="referralData.birthDate"></Calendar>
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="civilStat">Civil Status</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.civilStatus" :options="civilStatus" optionLabel="Name" optionValue="CivilStatusID" placeholder="Select Civil Status" />
+                        <Dropdown v-else disabled v-model="referralData.civilStatus" :options="civilStatus" optionLabel="Name" optionValue="CivilStatusID" placeholder="Select Civil Status" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else>Nationality</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.nationality" :options="nationality" optionLabel="Description" optionValue="ID" placeholder="Select Nationality" />
+                        <Dropdown v-else disabled v-model="referralData.nationality" :options="nationality" optionLabel="Description" optionValue="ID" placeholder="Select Nationality" />
                     </div>
                     <Divider align="left" type="solid">
                         <b>Address</b>
@@ -972,31 +976,31 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="patCont">Patient's Contact No.</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.patientContact" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.patientContact" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="street">Street</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputText v-else class="uppercase" required readonly v-model="referralData.street" id="street" type="text" />
+                        <InputText v-else class="uppercase" readonly v-model="referralData.street" id="street" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="province">Province</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.provinceID" :options="provinceList" optionLabel="Description" optionValue="ProvinceID" @change="fetchMunicipality()" placeholder="Select Province" />
+                        <Dropdown v-else disabled v-model="referralData.provinceID" :options="provinceList" optionLabel="Description" optionValue="ProvinceID" @change="fetchMunicipality()" placeholder="Select Province" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infName">City/Municipality</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled v-model="referralData.municipalityID" :options="municipalityList" optionLabel="Description" optionValue="MunicipalityID" @change="fetchBarangay()" placeholder="Select Municipality" />
+                        <Dropdown v-else disabled v-model="referralData.municipalityID" :options="municipalityList" optionLabel="Description" optionValue="MunicipalityID" @change="fetchBarangay()" placeholder="Select Municipality" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="infName">Barangay</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required disabled readonly v-model="referralData.barangayID" :options="barangayList" optionLabel="Name" optionValue="Id" placeholder="Select Barangay" />
+                        <Dropdown v-else disabled readonly v-model="referralData.barangayID" :options="barangayList" optionLabel="Name" optionValue="Id" placeholder="Select Barangay" />
                     </div>
                 </div>
             </div>
@@ -1014,49 +1018,49 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="impression">Impression</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.impression" id="impression" autoResize rows="1" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.impression" id="impression" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="complaints">Chief Complaints</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.chiefComplaint" id="complaints" autoResize rows="1" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.chiefComplaint" id="complaints" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="presentation">Presentation/History</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.history" id="presentation" autoResize rows="1" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.history" id="presentation" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="exams">Pertinent Examination Findings</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.examinationFindings" id="exams" autoResize rows="1" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.examinationFindings" id="exams" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="labs">Pertinent Laboratories</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.laboratories" id="labs" autoResize rows="1" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.laboratories" id="labs" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="imaging">Pertinent Imaging/Studies</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.imaging" id="imaging" autoResize rows="1" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.imaging" id="imaging" autoResize rows="1" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="interventions">Medical Interventions/Medicines Given</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.medicalInterventions" id="interventions" autoResize rows="3" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.medicalInterventions" id="interventions" autoResize rows="3" cols="30" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="course">Significant Course in the Ward/ER</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Textarea v-else required readonly v-model="referralData.courseInTheWard" id="course" autoResize rows="3" cols="30" />
+                        <Textarea v-else readonly v-model="referralData.courseInTheWard" id="course" autoResize rows="3" cols="30" />
                     </div>
                     <div class="field col-12 md:col-12">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
@@ -1067,6 +1071,9 @@ onMounted(async () => {
                                 <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../../../../JBLMGH_OURS/` + fn)">
                                     <img :src="`../../../../JBLMGH_OURS/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
                                 </div>
+                                <!-- <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../src/uploads/` + fn)">
+                                    <img :src="`../src/uploads/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
+                                </div> -->
                             </div>
                         </div>
                     </div>
@@ -1086,101 +1093,106 @@ onMounted(async () => {
                 <div class="p-fluid formgrid grid">
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
-                        <label v-else for="Height">Height</label>
+                        <label v-else for="Height">Height (ft/inches)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <div v-else class="flex flex-row">
-                            <InputText required @change="calculateBMI" v-model="heightFt" id="ft" type="text" placeholder="Feet" />
-                            <InputText required @change="calculateBMI" v-model="heightIn" id="in" type="text" placeholder="Inches" />
+                            <InputText @change="calculateBMI" v-model="heightFt" id="ft" type="text" placeholder="Feet" />
+                            <InputText @change="calculateBMI" v-model="heightIn" id="in" type="text" placeholder="Inches" />
                         </div>
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="Weight">Weight(Kg)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required @change="calculateBMI" :readonly="!editVitals" v-model="referralData.weight" id="Weight" type="text" />
+                        <InputNumber v-else :useGrouping="false" @change="calculateBMI" :readonly="!editVitals" v-model="referralData.weight" id="Weight" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="BMI">Body Mass Index (BMI)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required readonly v-model="referralData.bmi" id="BMI" type="text" />
+                        <InputNumber v-else :useGrouping="false" readonly v-model="referralData.bmi" id="BMI" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="bp">Blood Pressure</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <div v-else class="flex flex-row">
-                            <InputNumber :useGrouping="false" required :readonly="!editVitals" v-model="referralData.systolic" id="ft" type="text" placeholder="Systolic" />
-                            <InputNumber :useGrouping="false" required :readonly="!editVitals" v-model="referralData.diastolic" id="ft" type="text" placeholder="Diastolic" />
+                            <InputNumber :useGrouping="false" :readonly="!editVitals" v-model="referralData.systolic" id="ft" type="text" placeholder="Systolic" />
+                            <InputNumber :useGrouping="false" :readonly="!editVitals" v-model="referralData.diastolic" id="ft" type="text" placeholder="Diastolic" />
                         </div>
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="o2">Oxygen Saturation</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required :readonly="!editVitals" v-model="referralData.oxygenSaturation" id="o2" type="text" />
+                        <InputNumber v-else :useGrouping="false" :readonly="!editVitals" v-model="referralData.oxygenSaturation" id="o2" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="temp">Temperature(Celcius)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required :readonly="!editVitals" v-model="referralData.temperature" id="temp" type="text" />
+                        <InputNumber v-else :useGrouping="false" :readonly="!editVitals" v-model="referralData.temperature" id="temp" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="rr">Respiratory Rate (RR)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required :readonly="!editVitals" v-model="referralData.respiratoryRate" id="rr" type="text" />
+                        <InputNumber v-else :useGrouping="false" :readonly="!editVitals" v-model="referralData.respiratoryRate" id="rr" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="cr">Cardiac Rate (CR)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required :readonly="!editVitals" v-model="referralData.cardiacRate" id="cr" type="text" />
+                        <InputNumber v-else :useGrouping="false" :readonly="!editVitals" v-model="referralData.cardiacRate" id="cr" type="text" />
                     </div>
-                    <div class="field col-12 md:col-6">
+                    <!-- <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="pr">Pulse Rate (PR)</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required :readonly="!editVitals" v-model="referralData.pulseRate" id="pr" type="text" />
-                    </div>
+                        <InputNumber v-else :useGrouping="false" :readonly="!editVitals" v-model="referralData.pulseRate" id="pr" type="text" />
+                    </div> -->
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="pain">CB</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <InputNumber v-else :useGrouping="false" required :readonly="!editVitals" v-model="referralData.cbg" id="pain" type="text" />
+                        <InputNumber v-else :useGrouping="false" :readonly="!editVitals" v-model="referralData.cbg" id="pain" type="text" />
                     </div>
                     <div class="field col-12 md:col-6">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                         <label v-else for="pain">Pain Scale</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                        <Dropdown v-else required :readonly="!editVitals" v-model="referralData.painScale" :options="painScale" optionLabel="no" optionValue="value" placeholder="Select Pain Scale" />
+                        <Dropdown v-else :readonly="!editVitals" v-model="referralData.painScale" :options="painScale" optionLabel="no" optionValue="value" placeholder="Select Pain Scale" />
                     </div>
                     <div class="col-12 md:col-6 xl:flex p-0">
                         <div class="field col-12 md:col-3">
                             <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                             <label v-else for="gcs">Eyes</label>
                             <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                            <Dropdown v-else required :disabled="!editVitals" v-model="referralData.e" @change="calculateGCS" :options="e" optionLabel="no" optionValue="value" placeholder="Select E" />
+                            <Dropdown v-else :disabled="!editVitals" v-model="referralData.e" @change="calculateGCS" :options="e" optionLabel="no" optionValue="value" placeholder="Select E" />
                         </div>
                         <div class="field col-12 md:col-3">
                             <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                             <label v-else for="gcs">Verbal</label>
                             <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                            <Dropdown v-else required :disabled="!editVitals" v-model="referralData.v" @change="calculateGCS" :options="v" optionLabel="no" optionValue="value" placeholder="Select V" />
+                            <Dropdown v-else :disabled="!editVitals" v-model="referralData.v" @change="calculateGCS" :options="v" optionLabel="no" optionValue="value" placeholder="Select V" />
                         </div>
                         <div class="field col-12 md:col-3">
                             <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                             <label v-else for="gcs">Motor</label>
                             <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                            <Dropdown v-else required :disabled="!editVitals" v-model="referralData.m" @change="calculateGCS" :options="m" optionLabel="no" optionValue="value" placeholder="Select M" />
+                            <Dropdown v-else :disabled="!editVitals" v-model="referralData.m" @change="calculateGCS" :options="m" optionLabel="no" optionValue="value" placeholder="Select M" />
                         </div>
                         <div class="field col-12 md:col-3">
                             <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
                             <label v-else for="gcs">Glasgow Coma Scale</label>
                             <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
-                            <InputNumber v-else :useGrouping="false" required readonly v-model="referralData.gcs" id="gcs" type="text" />
+                            <InputNumber v-else :useGrouping="false" readonly v-model="referralData.gcs" id="gcs" type="text" />
                         </div>
+                    </div>
+                    <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
+                    <div v-else class="field col-12 md:col-6">
+                        <label for="gender">Urgent? <span class="text-red-600">*</span></label>
+                        <Dropdown disabled required :options="critical" v-model="referralData.isCritical" optionLabel="injury" optionValue="value" placeholder="Is the Referral Urgent?" />
                     </div>
                 </div>
                 <div v-if="editVitals" class="col-12 flex flex-row gap-2 align-content-center justify-content-end">
@@ -1207,23 +1219,23 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-15rem">Primary Department</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
-                <InputText v-else class="uppercase" required v-model="referralData.receivingDepartment" type="text" />
+                <Dropdown editable v-if="hciID == 271" v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
+                <InputText v-else class="uppercase" v-model="referralData.receivingDepartment" type="text" />
             </div>
             <div class="flex align-items-center gap-4 mb-3">
                 <label for="email" class="font-semibold w-15rem">Physician</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Primary Physician" />
-                <InputText v-else class="uppercase" required v-model="referralData.assignedDoctor" type="text" />
+                <Dropdown editable v-if="hciID == 271" v-model="referralData.assignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Primary Physician" />
+                <InputText v-else class="uppercase" v-model="referralData.assignedDoctor" type="text" />
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-15rem">Secondary Department</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.secondaryReceivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Secondary Department" />
-                <InputText v-else class="uppercase" required v-model="referralData.secondaryReceivingDepartment" type="text" />
+                <Dropdown editable v-if="hciID == 271" v-model="referralData.secondaryReceivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Secondary Department" />
+                <InputText v-else class="uppercase" v-model="referralData.secondaryReceivingDepartment" type="text" />
             </div>
             <div class="flex align-items-center gap-4 mb-3">
                 <label for="email" class="font-semibold w-15rem">Physician</label>
-                <Dropdown required editable v-if="hciID == 271" v-model="referralData.secondaryAssignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Secondary Physician" />
-                <InputText v-else class="uppercase" required v-model="referralData.secondaryAssignedDoctor" type="text" />
+                <Dropdown editable v-if="hciID == 271" v-model="referralData.secondaryAssignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Secondary Physician" />
+                <InputText v-else class="uppercase" v-model="referralData.secondaryAssignedDoctor" type="text" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button :disabled="referralData.receivingDepartment <= '0' || referralData.assignedDoctor <= '0'" @click="handleAccept" type="button" label="Submit" severity="primary"></Button>
@@ -1237,7 +1249,7 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-15rem">Department</label>
-                <Dropdown required editable v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
+                <Dropdown editable v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Primary Department" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button :disabled="referralData.receivingDepartment <= '0'" @click="handleSetDept" type="button" label="Submit" severity="primary"></Button>
@@ -1314,7 +1326,7 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-6rem">Receiving Hospital</label>
-                <Dropdown required v-model="referralData.newReceivingHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
+                <Dropdown v-model="referralData.newReceivingHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button @click="handleTransferClick" type="button" label="Submit" severity="primary"></Button>
@@ -1328,7 +1340,7 @@ onMounted(async () => {
             </div>
             <div class="flex align-items-center gap-3 mb-3">
                 <label for="department" class="font-semibold w-6rem">Receiving Hospital</label>
-                <Dropdown required v-model="referralData.newReceivingHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
+                <Dropdown v-model="referralData.newReceivingHospital" id="refHCI" filter :options="HCI" optionLabel="FacilityName" optionValue="HealthFacilityCodeShort" placeholder="Select Referring HCI" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button @click="handleOPCENToOtherHCI" type="button" label="Submit" severity="primary"></Button>
@@ -1338,7 +1350,7 @@ onMounted(async () => {
         <!-- INPUT VALIDATION ERROR -->
         <Dialog v-model:visible="validation" modal header="Uh-oh! 😟" :closable="false" :style="{ width: '25rem' }">
             <div class="flex align-items-center gap-3 mb-3">
-                <p>Please fill-out all required fields.</p>
+                <p>Please fill-out all fields.</p>
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button type="button" label="Okay" severity="primary" @click="validation = false"></Button>

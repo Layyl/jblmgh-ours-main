@@ -86,6 +86,11 @@ const router = createRouter({
                     component: () => import('@/views/pages/AddPatient.vue')
                 },
                 {
+                    path: '/ours/editPatient',
+                    name: 'editPatient',
+                    component: () => import('@/views/pages/EditPatientForm.vue')
+                },
+                {
                     path: '/ours/addPatientSafru',
                     name: 'addPatientSafru',
                     component: () => import('@/views/pages/AddPatientSafru.vue')

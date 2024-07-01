@@ -129,11 +129,11 @@
                     </div>
                     <div class="service-provide-box" data-aos="fade-up" data-aos-duration="700">
                         <div class="service-provide-title">
-                            <h3>Referrals Made Easier.</h3>
-                            <p>Use OURS.</p>
+                            <h3>Register now to use OURS</h3>
+                            <p>Fill up the form and we'll help you register!</p>
                             <div class="provide-btn d-flex align-items-center">
-                                <a href="#home">Log In</a>
-                                <a href="#home" class="provide-arrow">
+                                <a href="https://docs.google.com/forms/d/e/1FAIpQLSc9MasaUCd-P6kwUjMFnZlfFeP_7mxV1zOlI4TdYvClfDrR-g/viewform" target="_blank">Registration Form</a>
+                                <a href="https://docs.google.com/forms/d/e/1FAIpQLSc9MasaUCd-P6kwUjMFnZlfFeP_7mxV1zOlI4TdYvClfDrR-g/viewform" target="_blank" class="provide-arrow">
                                     <figure class="mb-0 d-flex align-items-center justify-content-center">
                                         <img src="../assets/img/samll-arrow.png" />
                                     </figure>
@@ -341,12 +341,15 @@ const login = async () => {
         password: password.value
     });
     if (response.data.status == 2) {
-        Cookies.set('token', response.data.token);
-        Cookies.set('hciID', response.data.user.hciID);
-        Cookies.set('uname', response.data.user.username);
-        Cookies.set('pID', response.data.user.personID);
-        Cookies.set('uID', response.data.user.id);
-        Cookies.set('tempPass', response.data.user.tempPassChanged);
+        var date = new Date();
+        date.setTime(date.getTime() + 60 * 60 * 1000); // 1 hour in milliseconds
+
+        Cookies.set('token', response.data.token, { expires: date });
+        Cookies.set('hciID', response.data.user.hciID, { expires: date });
+        Cookies.set('uname', response.data.user.username, { expires: date });
+        Cookies.set('pID', response.data.user.personID, { expires: date });
+        Cookies.set('uID', response.data.user.id, { expires: date });
+        Cookies.set('tempPass', response.data.user.tempPassChanged, { expires: date });
         localStorage.setItem('sessionID', response.data.token);
         router.push('/ours/dashboard');
     } else {

@@ -166,11 +166,18 @@ const redirectToViewPatient = (referralID, referralHistoryID, safru) => {
     }
 };
 
+const redirectToEditPatient = (referralID, referralHistoryID) => {
+    router.push(`/ours/editPatient?rid=${referralID}&rhid=${referralHistoryID}`);
+};
+
+const showEditButton = (isPosted) => {
+    return isPosted == 0;
+};
 const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
-const showPrintButton = (referralHistory) => {
-    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1);
+const showPrintButton = (referralHistory, inTransit) => {
+    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1); //add if trigger to set to intransit is active: && inTransit.inTransit == 1
 };
 
 const showTransitButton = (referralHistory, inTransit) => {
@@ -203,7 +210,8 @@ const clear = async (tab) => {
     }
 };
 
-const printReferralForm = async (referralHistoryID) => {
+const printReferralForm = async (referralHistoryID, data) => {
+    setToIntransit(data);
     window.open(`${import.meta.env.VITE_API_BASE_URL}/getReferralForm?referralHistoryID=${referralHistoryID}`);
 };
 
@@ -228,8 +236,8 @@ const cancelReferral = async (forCancel) => {
     fetchOutboundPatients();
 };
 
-const setToIntransit = async () => {
-    await api.post(`/setToIntransit`, { vehicleNumber: vehicleNumber.value, vehicleType: vehicleType.value, referral: tOInTransitID.value, eta: eta.value }, { headers: header });
+const setToIntransit = async (data) => {
+    await api.post(`/setToIntransit`, { referral: data }, { headers: header });
     fetchOutboundPatients();
 };
 
@@ -305,9 +313,6 @@ onMounted(async () => {
 </script>
 
 <template>
-    <Message :closable="false" severity="warn"
-        >JBLMGH is currently processing <span class="font-bold"> {{ processingCount.processingCount }} patient/s. </span></Message
-    >
     <div class="grid">
         <div class="col-12 lg:col-12 xl:col-12">
             <div class="card">
@@ -347,6 +352,11 @@ onMounted(async () => {
                             <Skeleton></Skeleton>
                         </template>
                     </Column>
+                    <Column :style="{ width: '300px' }" field="referringHospitalDescription" header="Status">
+                        <template #body>
+                            <Skeleton></Skeleton>
+                        </template>
+                    </Column>
                     <Column :style="{ width: '50px' }" field="referringHospitalDescription" header="Actions">
                         <template #body>
                             <Skeleton></Skeleton>
@@ -364,7 +374,20 @@ onMounted(async () => {
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
                         </template>
                     </Column>
-                    <Column class="uppercase">
+                    <Column class="uppercase" field="isPosted" header="Status">
+                        <template #body="slotProps">
+                            <span
+                                :class="{
+                                    'text-green-600 font-bold': slotProps.data.isPosted === 1,
+                                    'text-yellow-600 font-bold': slotProps.data.isPosted === 0
+                                }"
+                            >
+                                {{ slotProps.data.isPosted === 1 ? 'Posted' : slotProps.data.isPosted === 0 ? 'For Posting' : '' }}
+                            </span>
+                        </template>
+                    </Column>
+
+                    <!-- <Column class="uppercase">
                         <template #body="slotProps">
                             <Chip
                                 class="cursor-pointer"
@@ -372,15 +395,46 @@ onMounted(async () => {
                                 label="In transit"
                                 icon="pi pi-car"
                                 v-if="slotProps.data.inTransit == 1"
-                                v-tooltip.focus.bottom="'Vehicle Plate #: ' + slotProps.data.vehicleNumber + ' \n \n Vehicle Type: ' + slotProps.data.vehicleType + ' \n \n ETA: ' + slotProps.data.eta + ' hour(s)'"
+                                v-tooltip.focus.bottom="
+                                    'Vehicle Plate #: ' +
+                                    slotProps.data.vehicleNumber +
+                                    ' \n \n Vehicle Type: ' +
+                                    slotProps.data.vehicleType +
+                                    ' \n \n In Transit Since: ' +
+                                    slotProps.data.inTransitDateTime +
+                                    ' \n \n ETA: ' +
+                                    slotProps.data.eta +
+                                    ' hour(s)'
+                                "
                             />
                         </template>
-                    </Column>
+                    </Column> -->
                     <Column class="uppercase" header="Actions" :style="{ width: '150px' }">
                         <template #body="slotProps">
-                            <Button v-if="showCancelButton(slotProps.data.referralHistory)" @click="handleCancelButton(slotProps.data.referralHistory[0])" icon="pi pi-times" label="Cancel" class="p-button p-button-danger"></Button>
-                            <Button v-if="showTransitButton(slotProps.data.referralHistory, slotProps.data)" @click="toggleInTransit(slotProps.data)" icon="pi pi-car" class="p-button p-button-info mx-1"></Button>
-                            <Button v-if="showPrintButton(slotProps.data.referralHistory)" @click="printReferralForm(slotProps.data.referralHistory[0].encryptedReferralHistoryID)" icon="pi pi-print" class="p-button p-button-danger mx-1"></Button>
+                            <Button
+                                v-tooltip.top="'Edit Referral'"
+                                v-if="showEditButton(slotProps.data.isPosted)"
+                                @click="redirectToEditPatient(slotProps.data.referralHistory[0].encryptedReferralID, slotProps.data.referralHistory[0].encryptedReferralHistoryID)"
+                                icon="pi pi-pencil"
+                                label=""
+                                class="p-button mr-3"
+                            ></Button>
+                            <Button
+                                v-tooltip.top="'Cancel referral'"
+                                v-if="showCancelButton(slotProps.data.referralHistory)"
+                                @click="handleCancelButton(slotProps.data.referralHistory[0])"
+                                icon="pi pi-times"
+                                label=""
+                                class="p-button p-button-danger"
+                            ></Button>
+                            <!-- <Button v-if="showTransitButton(slotProps.data.referralHistory, slotProps.data)" @click="toggleInTransit(slotProps.data)" icon="pi pi-car" class="p-button p-button-info mx-1"></Button> -->
+                            <Button
+                                v-tooltip.top="'Print Referral Form'"
+                                v-if="showPrintButton(slotProps.data.referralHistory, slotProps.data)"
+                                @click="printReferralForm(slotProps.data.referralHistory[0].encryptedReferralHistoryID, slotProps.data)"
+                                icon="pi pi-print"
+                                class="p-button p-button-danger mx-1"
+                            ></Button>
                         </template>
                     </Column>
                     <template #expansion="slotProps">

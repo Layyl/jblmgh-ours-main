@@ -639,9 +639,10 @@ onMounted(async () => {
     await fetchDoctors();
     await fetchReferralData();
     await fetchNationality();
-    await fetchProvince();
-    await fetchMunicipality();
-    await fetchBarangay();
+    // if (!referralData.value.isSignore || referralData.value.provinceID !== null || referralData.value.municipalityID !== null || referralData.value.barangayID !== null) {
+    //     await Promise.all([fetchProvince(), fetchMunicipality(), fetchBarangay()]);
+    // }
+
     await fetchMessages();
     Cookies.set('referralID', referralData.value.referralID);
 
