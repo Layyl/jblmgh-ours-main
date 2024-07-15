@@ -77,7 +77,7 @@ watch(hciID, (newVal) => {
         model.value[0].items.push({
             label: 'Announcements',
             icon: 'pi pi-fw pi-megaphone',
-            to: '/ours/manageAnnouncements'
+            to: '/ours/announcements'
         });
     }
 });

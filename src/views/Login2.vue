@@ -344,6 +344,7 @@ const password = ref('');
 const response = ref([]);
 const visible = ref(false);
 const loading = ref(false);
+const message = ref('');
 const forgetPassword = () => {
     router.push('/forgot-password-assistance');
 };
@@ -367,6 +368,7 @@ const login = async () => {
         localStorage.setItem('sessionID', response.data.token);
         router.push('/ours/dashboard');
     } else {
+        message.value = response.data.message;
         showWarn();
         username.value = '';
         password.value = '';
@@ -375,6 +377,6 @@ const login = async () => {
 };
 
 const showWarn = () => {
-    toast.add({ severity: 'error', summary: 'Login Failed', detail: 'Incorrect username or Password', life: 3000 });
+    toast.add({ severity: 'error', summary: 'Login Failed', detail: message.value, life: 3000 });
 };
 </script>

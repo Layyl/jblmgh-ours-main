@@ -149,6 +149,10 @@ const createAccount = async () => {
     const response = await api.post(`/createAccount`, newUser.value, { headers: header });
 };
 
+const resendVerification = async (userEmail) => {
+    const response = await api.post(`/resendVerificationEmail`, { email: userEmail }, { headers: header });
+};
+
 const closeModal = async () => {
     addNew.value = false;
     deleteModal.value = false;
@@ -183,6 +187,13 @@ const handleCreateAccount = async () => {
     await setLoadingState('Signing up', 'Creating new account. Please Wait.');
     await createAccount();
     await hideLoadingModal('Account Created Successfully!🥳', 'You have successfully created the account. An email will be sent to the indicated user regarding the account creation.');
+    await closeModal();
+};
+
+const handleResendVerification = async (email) => {
+    await setLoadingState('Emailing user', 'Resending email verification. Please Wait.');
+    await resendVerification(email);
+    await hideLoadingModal('Email Sent!🥳', 'Verification email has been re-sent to the user.');
     await closeModal();
 };
 
@@ -248,10 +259,11 @@ onMounted(async () => {
                             >
                         </template>
                     </Column>
-                    <Column header="Action" :style="{ width: '200px' }">
+                    <Column class="uppercase" header="Action" :style="{ width: '200px' }">
                         <template #body="slotProps">
-                            <div>
-                                <Button @click="handleDeleteClick(slotProps.data.id)" icon="pi pi-trash" severity="danger" size="small" class="mx-1"></Button>
+                            <div class="text-center">
+                                <Button @click="handleDeleteClick(slotProps.data.id)" icon="pi pi-trash" severity="danger" label="Remove Account" size="small" class="mx-1 my-1"></Button>
+                                <Button v-if="!slotProps.data.email_verified_at" @click="handleResendVerification(slotProps.data.email)" icon="pi pi-refresh" severity="success" size="small" label="Reverify" class="mx-1 my-1"></Button>
                             </div>
                         </template>
                     </Column>
