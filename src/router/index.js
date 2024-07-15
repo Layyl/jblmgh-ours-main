@@ -134,6 +134,11 @@ const router = createRouter({
                     path: '/ours/manageHCI',
                     name: 'manageHCI',
                     component: () => import('@/views/pages/ManageHCI.vue')
+                },
+                {
+                    path: '/ours/manageAnnouncements',
+                    name: 'manageAnnouncements',
+                    component: () => import('@/views/pages/manageAnnouncements.vue')
                 }
             ]
         },

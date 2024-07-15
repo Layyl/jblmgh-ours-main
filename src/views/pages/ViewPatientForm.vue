@@ -36,6 +36,7 @@ const disclaimer = ref(0);
 const newMessageAlert = ref(false);
 const fetching = ref(false);
 const loading = ref(false);
+const uploading = ref(false);
 const loadingHeader = ref('');
 const loadingText = ref('');
 const loadingProgress = ref(true);
@@ -64,6 +65,10 @@ const genderList = ref([
 const critical = ref([
     { injury: 'Urgent', value: 1 },
     { injury: 'Non-Urgent', value: 2 }
+]);
+const rabies = ref([
+    { rabies: 'Yes', value: 1 },
+    { rabies: 'No', value: 2 }
 ]);
 const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
@@ -182,10 +187,17 @@ const fetchDoctors = async () => {
     doctorsList.value = response.data;
 };
 const collateFileNames = () => {
-    referralData.value.patientFiles = '';
+    if (!referralData.value.patientFiles) {
+        referralData.value.patientFiles = '';
+    } else if (referralData.value.patientFiles.length > 0 && filenameRef.value.files.length > 0) {
+        referralData.value.patientFiles += ', ';
+    }
+
     filenameRef.value.files.forEach((file, index) => {
         if (file.name !== undefined) {
+            // Concatenate the file name
             referralData.value.patientFiles += file.name;
+            // Add a comma if it's not the last file
             if (index < filenameRef.value.files.length - 1) {
                 referralData.value.patientFiles += ', ';
             }
@@ -199,7 +211,7 @@ const transferFiles = async () => {
     for (const file of files) {
         formData.append('files[]', file);
     }
-    formData.append('patientID', patientID.value);
+    formData.append('patientID', referralData.value.referralID);
     const response = await api.post(`/upload`, formData, { headers: header });
     if (response.ok) {
     } else {
@@ -212,6 +224,19 @@ const transferFiles = async () => {
         }
     }
 };
+
+const updatePatientFiles = async () => {
+    const response = await api.post(`/updatePatientFiles`, { referralID: referralData.value.referralID, patientFiles: referralData.value.patientFiles }, { headers: header });
+};
+
+const uploadFiles = async () => {
+    await setLoadingState('Uploading Files.', 'Currently Uploading additional files. Please wait.');
+    await collateFileNames();
+    await transferFiles();
+    await updatePatientFiles();
+    hideLoadingModal('Upload Successful!🎉', 'Additional files has been successfully uploaded.');
+};
+
 const calculateGCS = () => {
     referralData.value.gcs = parseInt(referralData.value.e) + parseInt(referralData.value.v) + parseInt(referralData.value.m);
 };
@@ -889,6 +914,12 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <Dropdown v-else disabled v-model="referralData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" />
                     </div>
+                    <div class="field col-12 md:col-6">
+                        <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
+                        <label v-else>Rabies Patient?</label>
+                        <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
+                        <Dropdown v-else v-model="referralData.isRabies" disabled :options="rabies" optionLabel="rabies" optionValue="value" placeholder="Indicate if patient is rabies patient" />
+                    </div>
                     <Divider align="left" type="solid"> <b>Informant's Information</b> </Divider>
 
                     <div class="field col-12 md:col-6">
@@ -1061,6 +1092,17 @@ onMounted(async () => {
                         <label v-else for="course">Significant Course in the Ward/ER</label>
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <Textarea v-else readonly v-model="referralData.courseInTheWard" id="course" autoResize rows="3" cols="30" />
+                    </div>
+                    <div class="field col-12 md:col-12">
+                        <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
+                        <FileUpload v-else ref="filenameRef" name="filenames[]" :showUploadButton="false" :showCancelButton="false" :multiple="true" accept="image/*" :maxFileSize="10000000">
+                            <template #empty>
+                                <p>Please upload pertinent test results.</p>
+                            </template>
+                        </FileUpload>
+                        <div class="md:col-1 sm:col-3 m-0 mt-2 p-0">
+                            <Button label="Upload" @click="uploadFiles"></Button>
+                        </div>
                     </div>
                     <div class="field col-12 md:col-12">
                         <Skeleton v-if="fetching" width="10rem" class="mb-2"></Skeleton>
@@ -1237,8 +1279,13 @@ onMounted(async () => {
                 <Dropdown editable v-if="hciID == 271" v-model="referralData.secondaryAssignedDoctor" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Secondary Physician" />
                 <InputText v-else class="uppercase" v-model="referralData.secondaryAssignedDoctor" type="text" />
             </div>
+            <div class="flex align-items-center gap-4 mb-3">
+                <label for="email" class="font-semibold w-15rem">EM Resident In-Charge</label>
+                <Dropdown editable v-if="hciID == 271" v-model="referralData.emInCharge" :options="doctorsList" optionLabel="fullName" optionValue="doctorID" placeholder="Select Referral Facilitator" />
+                <InputText v-else class="uppercase" v-model="referralData.emInCharge" type="text" />
+            </div>
             <div class="flex justify-content-end gap-2">
-                <Button :disabled="referralData.receivingDepartment <= '0' || referralData.assignedDoctor <= '0'" @click="handleAccept" type="button" label="Submit" severity="primary"></Button>
+                <Button :disabled="referralData.receivingDepartment <= '0' || referralData.assignedDoctor <= '0' || referralData.emInCharge <= '0'" @click="handleAccept" type="button" label="Submit" severity="primary"></Button>
             </div>
         </Dialog>
 

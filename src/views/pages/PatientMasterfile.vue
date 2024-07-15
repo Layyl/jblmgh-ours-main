@@ -163,7 +163,7 @@ onMounted(async () => {
                         <Button @click="clear(2)" class="w-full mx-2" severity="danger" type="button" icon="pi pi-times" label="Clear" />
                     </div>
                 </div>
-                <DataTable v-if="fetching" :value="tableSkeleton">
+                <DataTable paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" v-if="fetching" :value="tableSkeleton">
                     <Column :style="{ width: '180px' }" field="formatted_created_at" header="Date Referred">
                         <template #body>
                             <Skeleton></Skeleton>
@@ -186,7 +186,7 @@ onMounted(async () => {
                     </Column>
                 </DataTable>
 
-                <DataTable v-else v-model:expandedRows="expandedRows" :value="masterfile.referrals" dataKey="referralID" tableStyle="min-width: 60rem">
+                <DataTable paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" v-else v-model:expandedRows="expandedRows" :value="masterfile.referrals" dataKey="referralID" tableStyle="min-width: 60rem">
                     <Column expander style="width: 5rem" />
                     <Column class="uppercase" field="formatted_created_at" header="Date Referred"></Column>
                     <Column class="uppercase" field="fullName" header="Name"></Column>

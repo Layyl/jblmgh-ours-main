@@ -639,9 +639,13 @@ onMounted(async () => {
     await fetchDoctors();
     await fetchReferralData();
     await fetchNationality();
-    // if (!referralData.value.isSignore || referralData.value.provinceID !== null || referralData.value.municipalityID !== null || referralData.value.barangayID !== null) {
-    //     await Promise.all([fetchProvince(), fetchMunicipality(), fetchBarangay()]);
-    // }
+    await fetchProvince();
+    if (referralData.value.provinceID) {
+        await fetchMunicipality();
+    }
+    if (referralData.value.municipalityID) {
+        await fetchBarangay();
+    }
 
     await fetchMessages();
     Cookies.set('referralID', referralData.value.referralID);
@@ -974,9 +978,12 @@ onMounted(async () => {
                         <Skeleton v-if="fetching" height="3rem" class="mb-2"></Skeleton>
                         <div v-else class="card flex flex-row justify-content-center">
                             <div class="flex flex-wrap justify-content-center">
-                                <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`/src/uploads` + referralData.referralID + `/` + fn)">
-                                    <img :src="`/src/uploads` + referralData.referralID + `/` + fn" alt="" class="img-fluid mr-2 mb-2" width="100" />
+                                <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../../../../JBLMGH_OURS/` + fn)">
+                                    <img :src="`../../../../JBLMGH_OURS/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
                                 </div>
+                                <!-- <div class="cursor-pointer" v-if="patientFiles" v-for="fn in patientFiles" @click="viewImage(`../src/uploads/` + fn)">
+                                    <img :src="`../src/uploads/${fn}`" alt="" class="img-fluid mr-2 mb-2" width="100" />
+                                </div> -->
                             </div>
                         </div>
                     </div>

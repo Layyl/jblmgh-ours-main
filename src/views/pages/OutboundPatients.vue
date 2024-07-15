@@ -177,12 +177,12 @@ const showCancelButton = (referralHistory) => {
     return referralHistory.some((history) => history.referralStatus <= 2);
 };
 const showPrintButton = (referralHistory, inTransit) => {
-    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1); //add if trigger to set to intransit is active: && inTransit.inTransit == 1
+    return referralHistory.some((history) => (history.accepted == 1 && history.referralStatus != 9 && history.safru != 1 && inTransit.isRabies == '0') || inTransit.isRabies == '2'); //add if trigger to set to intransit is active: && inTransit.inTransit == 1
 };
 
 const showTransitButton = (referralHistory, inTransit) => {
     console.log(inTransit);
-    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1 && inTransit.inTransit != 1);
+    return referralHistory.some((history) => history.accepted == 1 && history.referralStatus != 9 && history.safru != 1 && inTransit.inTransit != 1 && inTransit.isRabies == '1');
 };
 const fetchProcessingCount = async () => {
     const response = await api.get(`/countProcessing`, { headers: header });
@@ -238,6 +238,7 @@ const cancelReferral = async (forCancel) => {
 
 const setToIntransit = async (data) => {
     await api.post(`/setToIntransit`, { referral: data }, { headers: header });
+    window.open(`${import.meta.env.VITE_API_BASE_URL}/getReferralForm?referralHistoryID=${data.referralHistory[0].encryptedReferralHistoryID}`);
     fetchOutboundPatients();
 };
 
@@ -253,7 +254,7 @@ const handleCancelClick = async () => {
 };
 const handleTransitClick = async () => {
     await setLoadingState('Setting to en route...', 'Notifying receiving hospital that you are on the way. Please wait.');
-    await setToIntransit();
+    await setToIntransit(tOInTransitID.value);
     inTransit.value = false;
     hideLoadingModal('Success!🎉', 'Receiving hospital is now informed that you are on the way. Please do not forget to bring the referral form. Thank you');
 };
@@ -374,7 +375,7 @@ onMounted(async () => {
                             {{ slotProps.data.gender === 1 ? 'Male' : slotProps.data.gender === 2 ? 'Female' : 'Other' }}
                         </template>
                     </Column>
-                    <Column class="uppercase" field="isPosted" header="Status">
+                    <!-- <Column class="uppercase" field="isPosted" header="Status">
                         <template #body="slotProps">
                             <span
                                 :class="{
@@ -385,7 +386,7 @@ onMounted(async () => {
                                 {{ slotProps.data.isPosted === 1 ? 'Posted' : slotProps.data.isPosted === 0 ? 'For Posting' : '' }}
                             </span>
                         </template>
-                    </Column>
+                    </Column> -->
 
                     <!-- <Column class="uppercase">
                         <template #body="slotProps">
@@ -427,7 +428,7 @@ onMounted(async () => {
                                 label=""
                                 class="p-button p-button-danger"
                             ></Button>
-                            <!-- <Button v-if="showTransitButton(slotProps.data.referralHistory, slotProps.data)" @click="toggleInTransit(slotProps.data)" icon="pi pi-car" class="p-button p-button-info mx-1"></Button> -->
+                            <Button v-if="showTransitButton(slotProps.data.referralHistory, slotProps.data)" @click="toggleInTransit(slotProps.data)" icon="pi pi-print" class="p-button p-button-danger mx-1"></Button>
                             <Button
                                 v-tooltip.top="'Print Referral Form'"
                                 v-if="showPrintButton(slotProps.data.referralHistory, slotProps.data)"
@@ -526,9 +527,9 @@ onMounted(async () => {
     </Dialog>
 
     <!-- Set to in transit -->
-    <Dialog closable v-model:visible="inTransit" modal header="Set to En Route" :closable="false" :style="{ width: '27rem' }">
+    <Dialog closable v-model:visible="inTransit" modal header="Rabies Patient Detected" :closable="false" :style="{ width: '27rem' }">
         <div class="flex align-items-center gap-3 mb-3">
-            <p>Please enter the vehicle's plate number and vehicle type/model</p>
+            <p>This referral is for a rabies patient. Please enter the vehicle's plate number and vehicle type/model to be used on patient transfer</p>
         </div>
         <div class="flex align-items-center gap-3 mb-3">
             <label for="plate" class="font-semibold w-10rem">Vehicle Plate Number</label>

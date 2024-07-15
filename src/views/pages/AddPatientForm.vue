@@ -17,6 +17,7 @@ const patientID = ref('');
 const patientData = ref({});
 const loading = ref(false);
 const fetching = ref(false);
+const sendReferral = ref(false);
 const processingCount = ref();
 const HCI = ref([]);
 const civilStatus = ref([]);
@@ -44,7 +45,10 @@ const critical = ref([
     { injury: 'Urgent', value: 1 },
     { injury: 'Non-Urgent', value: 2 }
 ]);
-
+const rabies = ref([
+    { rabies: 'Yes', value: '1' },
+    { rabies: 'No', value: '2' }
+]);
 const e = ref([...Array(4).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const v = ref([...Array(5).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
 const m = ref([...Array(6).keys()].map((n) => ({ no: `${n + 1}`, value: n + 1 })));
@@ -142,6 +146,7 @@ const transferFiles = async () => {
         formData.append('files[]', file);
     }
     formData.append('patientID', savedReferralID.value);
+    console.log('form data value', formData);
     const response = await api.post(`/upload`, formData, { headers: header });
     if (response.ok) {
     } else {
@@ -305,7 +310,11 @@ const saveData = async (toPost) => {
     saving.value = true;
     await collateFileNames();
     const response = await api.post(`/createNewReferral`, patientData.value, { headers: header }).then(async (res) => {
+        console.log('res: ', res);
         savedReferralID.value = res.data.referralID;
+        console.log('saved referral id', savedReferralID.value);
+        let encryptedReferralID = res.data.encryptedReferralID;
+        let encryptedReferralHistoryID = res.data.encryptedReferralHistoryID;
         await transferFiles();
         saving.value = false;
         success.value = true;
@@ -313,12 +322,22 @@ const saveData = async (toPost) => {
             if (toPost == 1) {
                 router.push('/ours/outboundPatients');
             } else {
-                router.push('/ours/addPatient');
+                router.push(`/ours/editPatient?rid=${encryptedReferralID}&rhid=${encryptedReferralHistoryID}`);
             }
         }, 1000);
     });
 };
 
+const showSendModal = () => {
+    sendReferral.value = true;
+};
+const cancelSend = () => {
+    sendReferral.value = false;
+};
+
+const cancelReferralCreation = () => {
+    router.push('/ours/addPatient');
+};
 watch(
     () => patientData.value.isSignore,
     (newValue) => {
@@ -424,6 +443,12 @@ onMounted(async () => {
                         <label v-else>Intended Department</label>
                         <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
                         <Dropdown v-else v-model="patientData.receivingDepartment" :options="departmentList" optionLabel="Description" optionValue="ServiceTypeID" placeholder="Select Department" />
+                    </div>
+                    <div class="field col-12 md:col-6">
+                        <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
+                        <label v-else>Rabies Patient? <span class="text-red-600">*</span></label>
+                        <Skeleton v-if="fetching" width="100%" height="2rem" class="mb-2"></Skeleton>
+                        <Dropdown required v-else v-model="patientData.isRabies" :options="rabies" optionLabel="rabies" optionValue="value" placeholder="Indicate if patient is rabies patient" />
                     </div>
                     <Divider align="left" type="solid">
                         <b>Informant's Information</b>
@@ -762,9 +787,9 @@ onMounted(async () => {
             </label>
         </div>
         <div class="col-12 flex flex-row gap-2 align-content-center justify-content-end">
-            <Button severity="info" type="button" label="Save" @click="saveData(0)" icon="pi pi-save" :loading="loading" />
-            <Button :disabled="isSaveDisabled" type="button" label="Post" @click="saveData(1)" icon="pi pi-check" :loading="loading" />
-            <Button severity="danger" type="button" label="Cancel" icon="pi pi-times" />
+            <Button severity="info" type="button" label="Save as Draft" @click="saveData(0)" icon="pi pi-save" :loading="loading" />
+            <Button :disabled="isSaveDisabled" type="button" label="Send Referral" @click="showSendModal" icon="pi pi-check" :loading="loading" />
+            <Button severity="danger" @click="cancelReferralCreation" type="button" label="Cancel" icon="pi pi-times" />
         </div>
 
         <Dialog v-model:visible="saving" modal header="Saving...⏳" :closable="false" :style="{ width: '25rem' }">
@@ -784,6 +809,15 @@ onMounted(async () => {
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button type="button" label="Okay" severity="primary" @click="validation = false"></Button>
+            </div>
+        </Dialog>
+        <Dialog closable v-model:visible="sendReferral" modal header="Send Referral?" :closable="false" :style="{ width: '26rem' }">
+            <div class="align-items-center gap-3 mb-3">
+                <p>Are you sure you want to send the referral? Once sent, changes cannot be made. Please double-check the details.</p>
+            </div>
+            <div class="flex justify-content-end gap-2">
+                <Button @click="saveData(1)" type="button" label="Send" severity="primary"></Button>
+                <Button @click="cancelSend" type="button" label="Cancel" severity="secondary" class="mx-2"></Button>
             </div>
         </Dialog>
     </div>

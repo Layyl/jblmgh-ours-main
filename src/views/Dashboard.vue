@@ -26,6 +26,7 @@ const password = ref('');
 const confPassword = ref('');
 const notMatch = ref(false);
 const weakPass = ref(false);
+const announcement = ref('');
 const passwordChangeSuccess = ref(false);
 const fetching = ref(true);
 const fetchingDashStats = ref(false);
@@ -89,6 +90,10 @@ const getStatusClass = (referralStatus) => {
             return 'p-tag-secondary';
     }
 };
+const getAnnouncement = async () => {
+    const response = await api.get(`/fetchActiveAnnouncements`, { headers: header });
+    announcement.value = response.data;
+};
 const getRecentInbound = async () => {
     const response = await api.get(`/fetchInboundPatients?lastName=${inboundLastName.value}&firstName=${inboundFirstName.value}&middleName=${inboundMiddleName.value}&hciID=${hciID.value}`, { headers: header });
     inboundPatients.value = response.data;
@@ -140,10 +145,11 @@ window.Echo = new Echo({
     enabledTransports: ['ws', 'wss']
 });
 onMounted(async () => {
+    
     window.Echo.channel('notification').listen('NewNotification', reload);
     // Access the Pusher instance from Echo
     const pusher = window.Echo.connector.pusher;
-
+    getAnnouncement();
     fetchERCensus();
     fetching.value = true;
     hciID.value = Cookies.get('hciID');
@@ -162,6 +168,9 @@ onMounted(async () => {
 </script>
 
 <template>
+    <Message v-if="announcement.announcement" severity="info" :closable="false"
+        >Announcement: <span class="font-bold font-itali">{{ announcement.announcement }} </span></Message
+    >
     <div class="grid">
         <div class="col-12 lg:col-6 xl:col-3">
             <div class="card mb-0">

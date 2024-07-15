@@ -15,6 +15,7 @@ const middleName = ref('');
 const mLastName = ref('');
 const mFirstName = ref('');
 const mMiddleName = ref('');
+const announcement = ref('');
 const erCensus = ref([]);
 const noMatch = ref(false);
 const hciID = ref('');
@@ -81,17 +82,24 @@ const clear = async () => {
     firstName.value = '';
     middleName.value = '';
 };
-
+const getAnnouncement = async () => {
+    const response = await api.get(`/fetchActiveAnnouncements`, { headers: header });
+    announcement.value = response.data;
+};
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
     console.log(hciID.value);
     loading.value = true;
+    getAnnouncement();
     await fetchUnpostedReferrals();
     loading.value = false;
 });
 </script>
 
 <template>
+    <Message v-if="announcement.announcement" severity="info" :closable="false"
+        >Announcement: <span class="font-bold font-itali">{{ announcement.announcement }} </span></Message
+    >
     <Message severity="warn" :closable="false" v-if="!loading"
         >NOTE: There are currently <span class="font-bold font-italic">{{ erCensus.ongoing_ED_consultation_total }} On-going ED Consultations</span> and
         <span class="font-bold font-italic">{{ erCensus.admitted_still_at_ED_total }} Admitted patients still in the ER</span> for a total of
@@ -106,11 +114,9 @@ onMounted(async () => {
                     <InputText :disabled="loading" @keyup.enter="fetchUnpostedReferrals" class="mt-1 mr-1 w-full" id="firstName" placeholder="First Name" type="text" v-model="firstName" />
                     <InputText :disabled="loading" @keyup.enter="fetchUnpostedReferrals" class="mt-1 mr-1 w-full" id="middleName" placeholder="Middle Name" type="text" v-model="middleName" />
 
-                    <div class="flex flex-row gap-2 align-items-center justify-content-center m-3">
-                        <Button @click="fetchUnpostedReferrals" class="mx-1 w-full" size="small" :disabled="lastName == ''" type="button" icon="pi pi-search" label="Search" :loading="loading" />
-                        <Button v-if="hciID.value == '271'" @click="clear" size="small" class="mx-2 w-full" severity="danger" type="button" icon="pi pi-times" label="Clear" :loading="loading" />
-                        <Button v-else @click="addPatientRedirect" size="small" class="mx-2 w-full" severity="info" type="button" icon="pi pi-plus" label="Add" :loading="loading" />
-                    </div>
+                    <Button @click="fetchUnpostedReferrals" class="mx-1 w-5" size="small" :disabled="lastName == ''" type="button" icon="pi pi-search" label="Search Patients" :loading="loading" />
+                    <Button v-if="hciID.value == '271'" @click="clear" size="small" class="mx-2 w-5" severity="danger" type="button" icon="pi pi-times" label="Clear" :loading="loading" />
+                    <Button v-else @click="addPatientRedirect" size="small" class="mx-2 w-5" severity="info" type="button" icon="pi pi-plus" label="Add Referrals" :loading="loading" />
                 </div>
             </div>
         </div>

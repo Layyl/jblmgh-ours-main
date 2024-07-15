@@ -53,6 +53,7 @@ const updatePassword = async () => {
 const handleUpdatePassword = async () => {
     await setLoadingState('Setting your password', 'Please wait while we set things up for you.');
     await updatePassword();
+    await verifyEmail();
     await hideLoadingModal('Password Changed Successfully!🥳', 'You have successfully finalized your account. You may now use it to access OURS.');
     router.push(`/success`);
 };
@@ -75,7 +76,6 @@ const hideLoadingModal = (header, text) => {
 };
 
 onMounted(async () => {
-    // await verifyEmail();
     encryptedEmail.value = route.query.em;
     token.value = route.query.token;
 });

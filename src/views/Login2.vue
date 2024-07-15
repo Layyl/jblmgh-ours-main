@@ -292,6 +292,20 @@
                             </li>
                         </ul>
                     </div>
+                    <div class="footer-box contact-details-box col-12 col-md-6">
+                        <h4>User Manuals</h4>
+                        <ul class="list-unstyled mb-0">
+                            <li>
+                                <a href="https://drive.google.com/file/d/1Dzm6a5Nun0SbzjopbYeJuTMvZjSWv88T/view?usp=sharing" target="_blank"><i class="fas fa-download"></i> Partner HCIs</a>
+                            </li>
+                            <li>
+                                <a href="https://drive.google.com/file/d/1xASiq3cgkHKYXMp62S_eFrNt7QSw5flM/view?usp=sharing" target="_blank"><i class="fas fa-download"></i> Operation Centers</a>
+                            </li>
+                            <li>
+                                <a href="https://drive.google.com/file/d/1w6NIws18iStUahOYpRoCajPA98BzVDL7/view?usp=sharing" target="_blank"><i class="fas fa-download"></i> Rescue Units</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </section>

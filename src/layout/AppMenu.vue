@@ -50,21 +50,34 @@ onMounted(async () => {
 });
 watch(hciID, (newVal) => {
     if (newVal === '0') {
+        model.value[0].items.push(
+            {
+                label: 'Announcements',
+                icon: 'pi pi-fw pi-megaphone',
+                to: '/ours/announcements'
+            },
+            {
+                label: 'Settings',
+                icon: 'pi pi-fw pi-cog',
+                items: [
+                    {
+                        label: 'Manage Users',
+                        icon: 'pi pi-user-edit',
+                        to: '/ours/manageUsers'
+                    },
+                    {
+                        label: 'Manage HCIs',
+                        icon: 'pi pi-building',
+                        to: '/ours/manageHCI'
+                    }
+                ]
+            }
+        );
+    } else if (newVal === '271') {
         model.value[0].items.push({
-            label: 'Settings',
-            icon: 'pi pi-fw pi-cog',
-            items: [
-                {
-                    label: 'Manage Users',
-                    icon: 'pi pi-user-edit',
-                    to: '/ours/manageUsers'
-                },
-                {
-                    label: 'Manage HCIs',
-                    icon: 'pi pi-building',
-                    to: '/ours/manageHCI'
-                }
-            ]
+            label: 'Announcements',
+            icon: 'pi pi-fw pi-megaphone',
+            to: '/ours/manageAnnouncements'
         });
     }
 });
