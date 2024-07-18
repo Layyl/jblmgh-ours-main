@@ -91,6 +91,7 @@ onMounted(async () => {
     console.log(hciID.value);
     loading.value = true;
     getAnnouncement();
+    await fetchERCensus();
     await fetchUnpostedReferrals();
     loading.value = false;
 });

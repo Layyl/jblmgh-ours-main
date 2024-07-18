@@ -22,16 +22,35 @@ const savingHeader = ref('');
 const savingText = ref('');
 const savingProgress = ref(true);
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
+const barangayList = ref([]);
+const municipalityList = ref([]);
+const provinceList = ref([]);
+const regionList = ref([]);
+const hciTypeList = ref([
+    { type: 'RHU', value: 1 },
+    { type: 'District Hospital', value: 2 },
+    { type: 'Private Hospital', value: 3 },
+    { type: 'Private Physician', value: 4 },
+    { type: 'Emergency Responders/Rescue Unit', value: 5 }
+]);
+
 const newHCI = ref({
     hciName: '',
     hciDOHCode: '',
-    hciDOHCodeShort: ''
+    hciDOHCodeShort: '',
+    hciStreet: '',
+    hciProvince: '',
+    hciBarangay: '',
+    hciMunicipality: '',
+    hciRegion: '',
+    hciType: ''
 });
 
 const redirectToAddPatient = (patientId) => {
     const route = patientId ? `/ours/addPatientForm?id=${patientId}` : `/ours/addPatientForm?id=new`;
     router.push(route);
 };
+
 const fetchReferringHCIs = async () => {
     const response = await api.get(`/fetchHealthCareInstitution`, { headers: header });
     hciList.value = response.data;
@@ -171,7 +190,29 @@ const handleAddHCI = async () => {
     await closeModal();
 };
 
+const fetchRegion = async () => {
+    const response = await axios.get(`https://psgc.gitlab.io/api/regions/`);
+    regionList.value = response.data;
+};
+
+const fetchProvince = async () => {
+    console.log(newHCI.value.hciRegion.code);
+    const response = await axios.get(`https://psgc.gitlab.io/api/regions/${newHCI.value.hciRegion.code}/provinces/`);
+    provinceList.value = response.data;
+};
+
+const fetchMunicipality = async () => {
+    const response = await axios.get(`https://psgc.gitlab.io/api/provinces/${newHCI.value.hciProvince.code}/cities-municipalities/`);
+    municipalityList.value = response.data;
+};
+
+const fetchBarangay = async () => {
+    const response = await axios.get(`https://psgc.gitlab.io/api/municipalities/${newHCI.value.hciMunicipality.code}/barangays/`);
+    barangayList.value = response.data;
+};
+
 onMounted(async () => {
+    await fetchRegion();
     await fetchReferringHCIs();
 });
 </script>
@@ -196,6 +237,27 @@ onMounted(async () => {
                     <Column field="ID" header="ID"></Column>
                     <Column field="FacilityName" header="HCI Name"></Column>
                     <Column field="HealthFacilityCodeShort" header="HCI Code"></Column>
+                    <Column field="barangay" header="Barangay"></Column>
+                    <Column field="municipality" header="Municipality"></Column>
+                    <Column field="province" header="Province"></Column>
+                    <Column field="region" header="Region"></Column>
+                    <Column field="healthFacilityType" header="Healthcare Facility Type">
+                        <template #body="slotProps">
+                            {{
+                                slotProps.data.healthFacilityType === 1
+                                    ? 'RHU'
+                                    : slotProps.data.healthFacilityType === 2
+                                    ? 'District Hospital'
+                                    : slotProps.data.healthFacilityType === 3
+                                    ? 'Private Hospital'
+                                    : slotProps.data.healthFacilityType === 4
+                                    ? 'Private Physician'
+                                    : slotProps.data.healthFacilityType === 5
+                                    ? 'Rescue Unit'
+                                    : 'Undefined'
+                            }}
+                        </template>
+                    </Column>
                     <Column header="Action" :style="{ width: '200px' }">
                         <template #body="slotProps">
                             <div>
@@ -210,16 +272,50 @@ onMounted(async () => {
         <Dialog v-model:visible="addNew" modal header="Add Healthcare Institution" :style="{ width: '50rem' }">
             <span class="p-text-secondary block mb-5">Please enter new HCI's information.</span>
             <div class="flex align-items-center gap-3 mb-5">
-                <label for="username" class="font-semibold w-6rem">HCI Name</label>
+                <label for="name" class="font-semibold w-6rem">HCI Name</label>
                 <InputText required id="username" v-model="newHCI.hciName" class="flex-auto" autocomplete="off" />
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <label for="contactNo" class="font-semibold w-6rem">HCI DOH Code</label>
+                <label for="code" class="font-semibold w-6rem">HCI DOH Code</label>
                 <InputText required id="contactNo" v-model="newHCI.hciDOHCode" class="flex-auto" autocomplete="off" />
             </div>
             <div class="flex align-items-center gap-3 mb-5">
-                <label for="email" class="font-semibold w-6rem">HCI DOH Short Code</label>
+                <label for="shortcode" class="font-semibold w-6rem">HCI DOH Short Code</label>
                 <InputText required id="email" v-model="newHCI.hciDOHCodeShort" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="street" class="font-semibold w-6rem">Street</label>
+                <InputText required id="street" v-model="newHCI.hciStreet" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="region" class="font-semibold w-6rem">Region</label>
+                <Dropdown v-model="newHCI.hciRegion" class="flex-auto" required :options="regionList" optionLabel="regionName" :optionValue="(val) => val" @change="fetchProvince()" placeholder="Select Region" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="shortcode" class="font-semibold w-6rem">Province</label>
+                <Dropdown v-model="newHCI.hciProvince" :disabled="!newHCI.hciRegion" class="flex-auto" required :options="provinceList" optionLabel="name" :optionValue="(val) => val" @change="fetchMunicipality()" placeholder="Select Province" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="shortcode" class="font-semibold w-6rem">Municipality</label>
+                <Dropdown
+                    v-model="newHCI.hciMunicipality"
+                    :disabled="!newHCI.hciProvince"
+                    class="flex-auto"
+                    required
+                    :options="municipalityList"
+                    optionLabel="name"
+                    :optionValue="(val) => val"
+                    @change="fetchBarangay()"
+                    placeholder="Select Province"
+                />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="shortcode" class="font-semibold w-6rem">Barangay</label>
+                <Dropdown v-model="newHCI.hciBarangay" :disabled="!newHCI.hciMunicipality" class="flex-auto" required :options="barangayList" optionLabel="name" :optionValue="(val) => val" placeholder="Select Barangay" />
+            </div>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="shortcode" class="font-semibold w-6rem">Health Facility Type</label>
+                <Dropdown v-model="newHCI.hciType" class="flex-auto" required :options="hciTypeList" optionLabel="type" optionValue="value" placeholder="Select Health Facility Type" />
             </div>
             <div class="flex justify-content-end gap-2">
                 <Button type="button" label="Cancel" severity="secondary" @click="visible = false"></Button>

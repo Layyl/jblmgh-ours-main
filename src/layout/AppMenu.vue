@@ -7,6 +7,7 @@ import axios from 'axios';
 import AppMenuItem from './AppMenuItem.vue';
 
 const hciID = ref('');
+const hciType = ref('');
 const username = ref('');
 const { checkTokenAndClearSession } = useAuth();
 const router = useRouter();
@@ -36,6 +37,7 @@ const logout = async () => {
 };
 onMounted(async () => {
     hciID.value = Cookies.get('hciID');
+    hciType.value = Cookies.get('hciType');
 
     model.value[0].items[1].to = dynamicTo.value;
 
@@ -86,7 +88,7 @@ const dynamicTo = computed(() => {
     if (hciID.value == 271) {
         console.log('a', model.value[0].items[1].to);
         return '/ours/addPatient';
-    } else if (hciID.value == 100001) {
+    } else if (hciType.value == 5) {
         console.log('b', model.value[0].items[1].to);
         return '/ours/AddPatientSafru?id=new';
     } else {

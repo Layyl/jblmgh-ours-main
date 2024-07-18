@@ -21,6 +21,14 @@ const savingText = ref('');
 const savingProgress = ref(true);
 const deleteModal = ref(false);
 const idToDelete = ref('');
+const newEmail = ref('');
+const newNumber = ref('');
+const userToChangeEmail = ref('');
+const editUser = ref(false);
+const changeEmail = ref(false);
+const changeNumber = ref(false);
+const modalTitleResponse = ref('');
+const modalMessageResponse = ref('');
 const header = { Authorization: `Bearer ${Cookies.get('token')}` };
 const verificationStat = ref([
     { status: 'For Verification', value: 1 },
@@ -180,13 +188,25 @@ const hideLoadingModal = (header, text) => {
         saving.value = false;
         closeModal();
         searchPatient();
-    }, 1000);
+    }, 2000);
 };
 
 const handleCreateAccount = async () => {
     await setLoadingState('Signing up', 'Creating new account. Please Wait.');
     await createAccount();
     await hideLoadingModal('Account Created Successfully!🥳', 'You have successfully created the account. An email will be sent to the indicated user regarding the account creation.');
+    await closeModal();
+};
+const handleUpdateEmail = async () => {
+    await setLoadingState('Updating', 'Updating email address. Please wait.');
+    await updateEmail();
+    await hideLoadingModal(modalTitleResponse.value, modalMessageResponse.value);
+    await closeModal();
+};
+const handleUpdateNumber = async () => {
+    await setLoadingState('Updating', 'Updating phone number. Please wait.');
+    await updateNumber();
+    await hideLoadingModal(modalTitleResponse.value, modalMessageResponse.value);
     await closeModal();
 };
 
@@ -202,12 +222,49 @@ const handleDeleteClick = async (ID) => {
     deleteModal.value = true;
 };
 
+const handleEditProfile = async (user) => {
+    userToChangeEmail.value = user;
+    editUser.value = true;
+};
+
+const handleChangeEmail = async () => {
+    changeEmail.value = true;
+    editUser.value = false;
+};
+
+const handleChangNumber = async () => {
+    changeNumber.value = true;
+    editUser.value = false;
+};
+
 const removeUser = async () => {
+    const response = await api.post(`/removeUser`, { userID: idToDelete.value }, { headers: header });
+    searchPatient();
+};
+
+const updateNumber = async () => {
     const validationSuccess = await validateRequiredFields();
     if (!validationSuccess) {
         return;
     }
-    const response = await api.post(`/removeUser`, { userID: idToDelete.value }, { headers: header });
+    const response = await api.post(`/updateNumber`, { userID: userToChangeEmail.value.id, contactno: newNumber.value }, { headers: header });
+    changeNumber.value = false;
+    newNumber.value = '';
+    modalTitleResponse.value = response.data.title;
+    modalMessageResponse.value = response.data.message;
+    searchPatient();
+};
+
+const updateEmail = async () => {
+    const validationSuccess = await validateRequiredFields();
+    if (!validationSuccess) {
+        return;
+    }
+    const response = await api.post(`/updateEmail`, { userID: userToChangeEmail.value.id, email: newEmail.value }, { headers: header });
+    changeEmail.value = false;
+    newEmail.value = '';
+    modalTitleResponse.value = response.data.title;
+    modalMessageResponse.value = response.data.message;
     searchPatient();
 };
 
@@ -241,7 +298,7 @@ onMounted(async () => {
         </div>
         <div class="col-12">
             <div class="card">
-                <DataTable :value="users" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" :loading="loading" scrollDirection="both" class="mt-3">
+                <DataTable :value="users" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :scrollable="true" scrollHeight="400px" :loading="loading" scrollDirection="both" class="mt-3 text-center">
                     <Column class="uppercase" field="id" header="User ID "></Column>
                     <Column class="uppercase" field="username" header="Username"></Column>
                     <Column class="uppercase" field="FacilityName" header="Hospital"></Column>
@@ -261,7 +318,8 @@ onMounted(async () => {
                     </Column>
                     <Column class="uppercase" header="Action" :style="{ width: '200px' }">
                         <template #body="slotProps">
-                            <div class="text-center">
+                            <div>
+                                <Button @click="handleEditProfile(slotProps.data)" icon="pi pi-cog" severity="info" label="Edit User Info" size="small" class="mx-1 my-1"></Button>
                                 <Button @click="handleDeleteClick(slotProps.data.id)" icon="pi pi-trash" severity="danger" label="Remove Account" size="small" class="mx-1 my-1"></Button>
                                 <Button v-if="!slotProps.data.email_verified_at" @click="handleResendVerification(slotProps.data.email)" icon="pi pi-refresh" severity="success" size="small" label="Reverify" class="mx-1 my-1"></Button>
                             </div>
@@ -291,6 +349,39 @@ onMounted(async () => {
             <div class="flex justify-content-end gap-2">
                 <Button type="button" label="Cancel" severity="secondary" @click="visible = false"></Button>
                 <Button type="button" label="Submit" @click="handleCreateAccount"></Button>
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="changeEmail" modal header="Change Email Address" :style="{ width: '40rem' }">
+            <span class="p-text-secondary block mb-5">Please enter user's new email address. A verification mail will be sent to the new email address.</span>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="email" class="font-semibold w-6rem">Email Address</label>
+                <InputText id="email" v-model="newEmail" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="flex justify-content-end gap-2">
+                <Button type="button" label="Cancel" severity="secondary" @click="changeEmail = false"></Button>
+                <Button type="button" label="Submit" @click="handleUpdateEmail"></Button>
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="changeNumber" modal header="Change Phone Number" :style="{ width: '40rem' }">
+            <span class="p-text-secondary block mb-5">Please enter user's new phone number</span>
+            <div class="flex align-items-center gap-3 mb-5">
+                <label for="number" class="font-semibold w-4rem">Phone Number</label>
+                <InputText id="number" v-model="newNumber" class="flex-auto" autocomplete="off" />
+            </div>
+            <div class="flex justify-content-end gap-2">
+                <Button type="button" label="Cancel" severity="secondary" @click="changeEmail = false"></Button>
+                <Button type="button" label="Submit" @click="handleUpdateNumber"></Button>
+            </div>
+        </Dialog>
+
+        <Dialog v-model:visible="editUser" modal :header="`Edit ${userToChangeEmail.FacilityName}`" :style="{ width: '40rem' }">
+            <span class="p-text-secondary block text-center mt-3">Please select information you want to edit.</span>
+            <h4 class="mb-5 text-center"></h4>
+            <div class="align-items-center gap-3 mb-5">
+                <Button class="block my-2 w-full p-4" label="Change Email" severity="primary" outlined @click="handleChangeEmail" />
+                <Button class="block my-2 w-full p-4" label="Change Phone Number" severity="primary" outlined @click="handleChangNumber" />
             </div>
         </Dialog>
 

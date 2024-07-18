@@ -54,7 +54,7 @@ const updatePassword = async () => {
 const handleUpdatePassword = async () => {
     await setLoadingState('Setting your password', 'Please wait while we set things up for you.');
     await updatePassword();
-    await hideLoadingModal('Password Changed Successfully!🥳', 'You have successfully finalized your account. You may now use it to access OURS.');
+    await hideLoadingModal('Password Changed Successfully!🥳', 'You have successfully finalized your account and is now verified. You may now use it to access OURS.');
     router.push(`/success`);
 };
 
@@ -88,7 +88,6 @@ onMounted(async () => {
             <div v-if="!isVerified" style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, rgba(33, 243, 51, 0.4) 10%, rgba(33, 243, 51, 0) 30%)">
                 <div class="w-full surface-card py-8 px-5 sm:px-8 flex flex-column align-items-center" style="border-radius: 53px">
                     <span class="text-green-500 font-bold text-3xl mb-5">Finalize Account Setup</span>
-                    <div class="text-600 mb-3">Your email is successfully verified! 🥳</div>
                     <div class="text-600 mb-5">Please set your new password to finish setting up your account.</div>
                     <Message v-if="blankpass" severity="error">Please enter your password.</Message>
                     <Message v-if="notMatch" severity="error">Passwords do not match.</Message>

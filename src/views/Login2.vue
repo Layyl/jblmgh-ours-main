@@ -364,6 +364,7 @@ const login = async () => {
         Cookies.set('uname', response.data.user.username, { expires: date });
         Cookies.set('pID', response.data.user.personID, { expires: date });
         Cookies.set('uID', response.data.user.id, { expires: date });
+        Cookies.set('hciType', response.data.user.healthFacilityType, { expires: date });
         Cookies.set('tempPass', response.data.user.tempPassChanged, { expires: date });
         localStorage.setItem('sessionID', response.data.token);
         router.push('/ours/dashboard');
