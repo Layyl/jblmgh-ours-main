@@ -97,7 +97,6 @@ const isSaveDisabled = computed(() => {
                 !patientData.value.transferReason ||
                 !patientData.value.gender ||
                 !patientData.value.nationality ||
-                !patientData.value.civilStatus ||
                 !patientData.isRabies))
     );
 });
