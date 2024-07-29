@@ -90,7 +90,15 @@ const isSaveDisabled = computed(() => {
     return (
         disclaimer.value != 1 ||
         (patientData.value.isSignore != 1 &&
-            (!patientData.value.provinceID || !patientData.value.municipalityID || !patientData.value.barangayID || !patientData.value.civilStatus || !patientData.value.transferReason || !patientData.value.gender || !patientData.value.nationality))
+            (!patientData.value.provinceID ||
+                !patientData.value.municipalityID ||
+                !patientData.value.barangayID ||
+                !patientData.value.civilStatus ||
+                !patientData.value.transferReason ||
+                !patientData.value.gender ||
+                !patientData.value.nationality ||
+                !patientData.value.civilStatus ||
+                !patientData.isRabies))
     );
 });
 

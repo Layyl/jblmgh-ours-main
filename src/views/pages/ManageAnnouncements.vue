@@ -82,10 +82,6 @@ const validateRequiredFields = () => {
 };
 
 const addAnnouncement = async () => {
-    const validationSuccess = await validateRequiredFields();
-    if (!validationSuccess) {
-        return;
-    }
     const response = await api.post(`/createNewAnnouncement`, { announcement: newAnouncement.value, created_by: hciID.value }, { headers: header });
     fetchAnnouncements();
 };
@@ -135,6 +131,10 @@ const hideLoadingModal = (header, text) => {
 };
 
 const handleAddAnnouncement = async () => {
+    const validationSuccess = await validateRequiredFields();
+    if (!validationSuccess) {
+        return;
+    }
     await setLoadingState('Adding Announcement', 'Adding announcement. Please Wait.');
     await addAnnouncement();
     await hideLoadingModal('Announcement Updated!🥳', 'You have successfully added a new Announcement. ');

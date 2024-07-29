@@ -357,7 +357,7 @@ const login = async () => {
     });
     if (response.data.status == 2) {
         var date = new Date();
-        date.setTime(date.getTime() + 60 * 60 * 1000); // 1 hour in milliseconds
+        date.setTime(date.getTime() + 5 * 60 * 60 * 1000); // 5 hours in milliseconds
 
         Cookies.set('token', response.data.token, { expires: date });
         Cookies.set('hciID', response.data.user.hciID, { expires: date });
