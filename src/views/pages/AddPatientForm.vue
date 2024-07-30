@@ -86,6 +86,7 @@ const fetchNationality = async () => {
 const isPostDisabled = computed(() => {
     return disclaimer.value != 1 || (patientData.value.isSignore != 1 && (!patientData.value.provinceID || !patientData.value.municipalityID || !patientData.value.barangayID));
 });
+
 const isSaveDisabled = computed(() => {
     return (
         disclaimer.value != 1 ||
@@ -97,8 +98,7 @@ const isSaveDisabled = computed(() => {
                 !patientData.value.transferReason ||
                 !patientData.value.gender ||
                 !patientData.value.nationality ||
-                !patientData.value.civilStatus ||
-                !patientData.isRabies))
+                !patientData.value.isRabies))
     );
 });
 

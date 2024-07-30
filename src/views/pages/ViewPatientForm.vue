@@ -186,24 +186,44 @@ const fetchDoctors = async () => {
     const response = await api.get(`/fetchDoctors`, { headers: header });
     doctorsList.value = response.data;
 };
+// const collateFileNames = () => {
+//     if (!referralData.value.patientFiles) {
+//         referralData.value.patientFiles = '';
+//     } else if (referralData.value.patientFiles.length > 0 && filenameRef.value.files.length > 0) {
+//         referralData.value.patientFiles += ', ';
+//     }
+
+//     filenameRef.value.files.forEach((file, index) => {
+//         if (file.name !== undefined) {
+//             // Concatenate the file name
+//             referralData.value.patientFiles += file.name;
+//             // Add a comma if it's not the last file
+//             if (index < filenameRef.value.files.length - 1) {
+//                 referralData.value.patientFiles += ', ';
+//             }
+//         }
+//     });
+// };
+
 const collateFileNames = () => {
     if (!referralData.value.patientFiles) {
         referralData.value.patientFiles = '';
-    } else if (referralData.value.patientFiles.length > 0 && filenameRef.value.files.length > 0) {
-        referralData.value.patientFiles += ', ';
     }
+    const existingFiles = referralData.value.patientFiles.split(', ').filter((name) => name.trim() !== '');
 
     filenameRef.value.files.forEach((file, index) => {
         if (file.name !== undefined) {
-            // Concatenate the file name
-            referralData.value.patientFiles += file.name;
-            // Add a comma if it's not the last file
-            if (index < filenameRef.value.files.length - 1) {
-                referralData.value.patientFiles += ', ';
+            if (!existingFiles.includes(file.name)) {
+                if (referralData.value.patientFiles.length > 0) {
+                    referralData.value.patientFiles += ', ';
+                }
+                referralData.value.patientFiles += file.name;
+                existingFiles.push(file.name);
             }
         }
     });
 };
+
 const transferFiles = async () => {
     const files = filenameRef.value.files;
     const formData = new FormData();

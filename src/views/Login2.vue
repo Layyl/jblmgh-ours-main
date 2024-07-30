@@ -16,22 +16,22 @@
                     </button>
                     <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
                         <!-- <ul class="navbar-nav">
-              <li class="nav-item active">
-                <a class="nav-link p-0" href="#home">Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link p-0" href="#features">About</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link p-0" href="#about">Services</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link p-0" href="#process">Doctors</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link p-0" href="#contacts">Contact Us</a>
-              </li>
-            </ul> -->
+                            <li class="nav-item active">
+                                <a class="nav-link p-0" href="#home">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link p-0" href="#features">About</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link p-0" href="#about">Services</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link p-0" href="#process">Doctors</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link p-0" href="#contacts">Contact Us</a>
+                            </li>
+                            </ul> -->
                         <div class="header-contact d-flex align-items-center">
                             <div class="phone d-flex align-items-center">
                                 <figure class="mb-0">

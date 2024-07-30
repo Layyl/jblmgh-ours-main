@@ -81,6 +81,13 @@ watch(hciID, (newVal) => {
             icon: 'pi pi-fw pi-megaphone',
             to: '/ours/announcements'
         });
+    } else if (newVal === '1') {
+        model.value[0].items = [];
+        model.value[0].items.push({
+            label: 'Patient Masterlist',
+            icon: 'pi pi-fw pi-users',
+            to: '/ours/patientMasterfile'
+        });
     }
 });
 
